@@ -1650,36 +1650,29 @@ export default function DashboardAdmin() {
             <span className="arrow">›</span>
           </button>
 
-          <button
-            className={`menu-item ${
-              activePage === 'recruitment'
-                ? 'active'
-                : ''
-            }`}
-            onClick={() =>
-              handleMenuClick('recruitment')
-            }
-          >
-            <span className="menu-icon">♧</span>
-            <span>Recruitment</span>
-            <span className="arrow">›</span>
-          </button>
+         <button
+  className={`menu-item ${
+    currentPage === 'recruitment'
+      ? 'active'
+      : ''
+  }`}
+  onClick={() => {
+    setCurrentPage('recruitment');
+    setActiveMenu('Recruitment');
+  }}
+>
+  <span className="menu-icon">
+    ♧
+  </span>
 
-          <button
-            className={`menu-item ${
-              activePage === 'time'
-                ? 'active'
-                : ''
-            }`}
-            onClick={() =>
-              handleMenuClick('time')
-            }
-          >
-            <span className="menu-icon">◷</span>
-            <span>Time</span>
-            <span className="arrow">›</span>
-          </button>
+  <span>
+    Recruitment
+  </span>
 
+  <span className="arrow">
+    ›
+  </span>
+</button>
           <button
             className={`menu-item ${
               activePage === 'finance'
