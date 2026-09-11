@@ -34,7 +34,7 @@ interface Absensi {
 
 export default function DashboardAdmin() {
   const [currentPage, setCurrentPage] = useState('dashboard');
-  const [activeMenu, setActiveMenu] = useState('Home');
+  const [, setActiveMenu] = useState('Home');
   /*
    * =====================================================
    * LOGIN
