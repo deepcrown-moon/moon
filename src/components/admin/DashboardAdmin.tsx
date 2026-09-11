@@ -1,226 +1,258 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '../../supabaseClient';
-
-interface Karyawan {
-  id: string;
-  nama: string;
-  jabatan: string;
-  email?: string;
-  pin?: string;
-  tempat_lahir?: string;
-  tanggal_lahir?: string;
-  bulan?: string;
-  tahun_lahir?: string;
-  nik_ktp?: string;
-  nama_ibu_kandung?: string;
-  no_telp?: string;
-  alamat_rumah?: string;
-  nama_rekening?: string;
-  no_rekening?: string;
-}
+import React, { useState, useEffect } from 'react';
+import { supabase } from '../../supabaseClient'; // Sesuaikan path jika berbeda
+import { 
+  Users, 
+  Calendar, 
+  Clock, 
+  DollarSign, 
+  FileText, 
+  Settings, 
+  LayoutDashboard, 
+  Briefcase, 
+  Bell, 
+  Search, 
+  TrendingUp, 
+  ShieldCheck,
+  LogOut
+} from 'lucide-react';
 
 export default function DashboardAdmin() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [adminUser, setAdminUser] = useState('');
-  const [adminPass, setAdminPass] = useState('');
-  const [daftarKaryawan, setDaftarKaryawan] = useState<Karyawan[]>([]);
-  const [daftarAbsensi, setDaftarAbsensi] = useState<any[]>([]);
+  const [totalKaryawan, setTotalKaryawan] = useState(0);
+  const [totalAbsensiHariIni, setTotalAbsensiHariIni] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [activeMenu, setActiveMenu] = useState('Home');
 
   useEffect(() => {
-    if (isLoggedIn) {
-      fetchKaryawan();
-      fetchAbsensi();
-    }
-  }, [isLoggedIn]);
+    fetchDashboardData();
+  }, []);
 
-  const fetchKaryawan = async () => {
-    const { data } = await supabase.from('karyawan').select('*').order('nama');
-    if (data) setDaftarKaryawan(data);
-  };
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      
+      // Ambil jumlah total karyawan
+      const { count: countKaryawan, error: errKaryawan } = await supabase
+        .from('karyawan')
+        .select('*', { count: 'exact', head: true });
 
-  const fetchAbsensi = async () => {
-    const { data } = await supabase.from('absensi').select('*').order('created_at', { ascending: false });
-    if (data) setDaftarAbsensi(data);
-  };
+      if (errKaryawan) throw errKaryawan;
+      setTotalKaryawan(countKaryawan || 0);
 
-  const handleLoginAdmin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (adminUser === 'admin' && adminPass === 'admin123') {
-      setIsLoggedIn(true);
-      return;
-    }
+      // Ambil jumlah absensi hari ini
+      const today = new Date().toISOString().split('T')[0];
+      const { count: countAbsensi, error: errAbsensi } = await supabase
+        .from('absensi')
+        .select('*', { count: 'exact', head: true })
+        .eq('tanggal', today);
 
-    const { data: foundAdmin, error } = await supabase
-      .from('karyawan')
-      .select('*')
-      .eq('email', adminUser)
-      .eq('pin', adminPass)
-      .single();
+      if (errAbsensi) throw errAbsensi;
+      setTotalAbsensiHariIni(countAbsensi || 0);
 
-    if (foundAdmin && !error) {
-      setIsLoggedIn(true);
-    } else {
-      alert('Login Admin gagal! Pastikan menggunakan Email Admin terdaftar dan PIN yang benar.');
+    } catch (error) {
+      console.error('Gagal memuat data dashboard:', error);
+    } finally {
+      setLoading(false);
     }
   };
-
-  const handleHapusKaryawan = async (id: string, nama: string) => {
-    if (window.confirm(`Yakin ingin menghapus akun "${nama}" dari database secara permanen?`)) {
-      const { error } = await supabase.from('karyawan').delete().eq('id', id);
-      if (error) alert('Gagal menghapus: ' + error.message);
-      else {
-        alert(`Akun ${nama} berhasil dihapus.`);
-        fetchKaryawan();
-      }
-    }
-  };
-
-  const handleExportExcel = () => {
-    let csv = "Nama;Jabatan;NIK KTP;Nama Ibu Kandung;No Telepon;Alamat;Nama Rekening;No Rekening;Email;Tempat/Tgl Lahir\n";
-    daftarKaryawan.forEach(k => {
-      csv += `"${k.nama}";"${k.jabatan}";"${k.nik_ktp || '-'}";"${k.nama_ibu_kandung || '-'}";"${k.no_telp || '-'}";"${k.alamat_rumah || '-'}";"${k.nama_rekening || '-'}";"${k.no_rekening || '-'}";"${k.email || '-'}";"${k.tempat_lahir || '-'}, ${k.tanggal_lahir || ''} ${k.bulan || ''} ${k.tahun_lahir || ''}"\n`;
-    });
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.setAttribute("download", "Database_Lengkap_Karyawan.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  const handleExportAbsensiExcel = () => {
-    if (daftarAbsensi.length === 0) {
-      alert("Belum ada data absensi untuk diexport.");
-      return;
-    }
-    let csv = "ID Karyawan;Nama;Tanggal;Jam Masuk;Jam Pulang;Status\n";
-    daftarAbsensi.forEach((a: any) => {
-      csv += `"${a.id_karyawan || '-'}";"${a.nama}";"${a.tanggal}";"${a.jam_masuk || '-'}";"${a.jam_pulang || '-'}";"${a.status || 'Hadir'}"\n`;
-    });
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.setAttribute("download", "Laporan_Absensi_Moonlight.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  const handleLogoutAdmin = () => {
-    setIsLoggedIn(false);
-    setAdminUser('');
-    setAdminPass('');
-  };
-
-  if (!isLoggedIn) {
-    return (
-      <div style={{ background: 'rgba(20, 15, 30, 0.85)', backdropFilter: 'blur(14px)', border: '1px solid rgba(255, 183, 197, 0.25)', padding: '30px', borderRadius: '16px', maxWidth: '380px', margin: '40px auto', boxShadow: '0 4px 20px rgba(0,0,0,0.5)', textAlign: 'center', color: '#fff' }}>
-        <h2 style={{ color: '#fff', marginBottom: '16px' }}>🔐 Login Admin (Email & PIN)</h2>
-        <form onSubmit={handleLoginAdmin} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <input type="email" placeholder="Email Admin Terdaftar..." value={adminUser} onChange={e => setAdminUser(e.target.value)} style={{ padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(15,23,42,0.8)', color: '#fff' }} />
-          <input type="password" placeholder="PIN / Password Admin..." value={adminPass} onChange={e => setAdminPass(e.target.value)} style={{ padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(15,23,42,0.8)', color: '#fff' }} />
-          <button type="submit" style={{ background: '#38bdf8', color: '#0f172a', border: 'none', padding: '10px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>Masuk Dashboard Admin</button>
-        </form>
-      </div>
-    );
-  }
 
   return (
-    <div style={{ background: 'rgba(20, 15, 30, 0.85)', backdropFilter: 'blur(14px)', border: '1px solid rgba(255, 183, 197, 0.25)', padding: '24px', borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.5)', color: '#fff' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h2 style={{ color: '#fff', margin: 0 }}>📊 Database Pendaftaran Pegawai & Admin</h2>
-        <button onClick={handleLogoutAdmin} style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>Keluar (Logout)</button>
+    <div className="flex h-screen bg-slate-50 font-sans overflow-hidden">
+      
+      {/* 1. SIDEBAR NAVIGATION (Menu Samping) */}
+      <aside className="w-64 bg-slate-900 text-slate-300 flex flex-col border-r border-slate-800 hidden md:flex">
+        <div className="p-5 flex items-center space-x-3 border-b border-slate-800">
+          <div className="bg-indigo-600 text-white p-2 rounded-lg font-bold text-lg">M</div>
+          <div>
+            <h1 className="text-white font-bold text-sm tracking-wider">MOONLIGHT HRIS</h1>
+            <p className="text-xs text-slate-400">Enterprise Edition</p>
+          </div>
+        </div>
+
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+          {[
+            { name: 'Home', icon: LayoutDashboard },
+            { name: 'Employee Profile', icon: Users },
+            { name: 'Employees', icon: Briefcase },
+            { name: 'Time & Attendance', icon: Clock },
+            { name: 'Finance & Payroll', icon: DollarSign },
+            { name: 'Productivity', icon: TrendingUp },
+            { name: 'Company Settings', icon: Settings },
+          ].map((item) => {
+            const Icon = item.icon;
+            const isActive = activeMenu === item.name;
+            return (
+              <button
+                key={item.name}
+                onClick={() => setActiveMenu(item.name)}
+                className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                  isActive 
+                    ? 'bg-indigo-600 text-white shadow-md' 
+                    : 'hover:bg-slate-800 hover:text-white text-slate-400'
+                }`}
+              >
+                <Icon size={18} />
+                <span>{item.name}</span>
+              </button>
+            );
+          })}
+        </nav>
+
+        <div className="p-4 border-t border-slate-800">
+          <button 
+            onClick={() => window.location.href = '/'}
+            className="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium text-rose-400 hover:bg-rose-500/10 transition-colors"
+          >
+            <LogOut size={18} />
+            <span>Keluar Aplikasi</span>
+          </button>
+        </div>
+      </aside>
+
+      {/* 2. MAIN CONTENT AREA */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        
+        {/* Top Header Bar */}
+        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 z-10">
+          <div className="flex items-center space-x-4">
+            <span className="text-xs bg-indigo-50 text-indigo-600 px-2.5 py-1 rounded-md font-semibold border border-indigo-100">
+              PRODUKSI ACTIVE
+            </span>
+            <span className="text-sm text-slate-500 hidden sm:inline">PT. Moonlight Indonesia</span>
+          </div>
+
+          <div className="flex items-center space-x-4">
+            <div className="relative hidden sm:block">
+              <Search className="absolute left-3 top-2.5 text-slate-400" size={16} />
+              <input 
+                type="text" 
+                placeholder="Cari data karyawan..." 
+                className="pl-9 pr-4 py-1.5 text-sm bg-slate-100 border border-slate-200 rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500 w-64"
+              />
+            </div>
+            <button className="p-2 text-slate-500 hover:bg-slate-100 rounded-full relative">
+              <Bell size={20} />
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full"></span>
+            </button>
+            <div className="flex items-center space-x-3 pl-3 border-l border-slate-200">
+              <div className="w-9 h-9 bg-indigo-600 text-white rounded-full flex items-center font-bold text-sm justify-center shadow-sm">
+                AD
+              </div>
+              <div className="hidden lg:block text-left">
+                <p className="text-xs font-bold text-slate-800">Administrator</p>
+                <p className="text-[10px] text-slate-500">HR Department</p>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Scrollable Dashboard Body */}
+        <main className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50">
+          
+          {/* Welcome Banner */}
+          <div className="bg-gradient-to-r from-indigo-600 to-indigo-800 rounded-2xl p-6 text-white shadow-lg flex flex-col md:flex-row justify-between items-center">
+            <div className="space-y-2 mb-4 md:mb-0">
+              <h2 className="text-2xl font-bold tracking-tight">Selamat Datang Kembali, Admin!</h2>
+              <p className="text-indigo-100 text-sm max-w-xl">
+                Sistem HRIS berjalan normal. Kelola kehadiran, rekapitulasi gaji, dan profil pegawai PT. Moonlight Indonesia dalam satu kendali terpusat.
+              </p>
+            </div>
+            <div className="bg-white/10 backdrop-blur-md px-5 py-3 rounded-xl border border-white/20 text-center">
+              <p className="text-xs text-indigo-200">Total Karyawan Aktif</p>
+              <p className="text-3xl font-extrabold">{loading ? '...' : totalKaryawan}</p>
+            </div>
+          </div>
+
+          {/* Quick Metrics Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+              <div>
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Kehadiran Hari Ini</p>
+                <p className="text-2xl font-bold text-slate-800 mt-1">{loading ? '...' : totalAbsensiHariIni} Orang</p>
+                <span className="text-xs text-emerald-600 font-medium mt-1 inline-block">● Real-time Sync</span>
+              </div>
+              <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
+                <Clock size={24} />
+              </div>
+            </div>
+
+            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+              <div>
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Status Database</p>
+                <p className="text-2xl font-bold text-slate-800 mt-1">Connected</p>
+                <span className="text-xs text-indigo-600 font-medium mt-1 inline-block">Supabase Cloud</span>
+              </div>
+              <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
+                <ShieldCheck size={24} />
+              </div>
+            </div>
+
+            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+              <div>
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Aplikasi Android</p>
+                <p className="text-2xl font-bold text-slate-800 mt-1">PWA Ready</p>
+                <span className="text-xs text-amber-600 font-medium mt-1 inline-block">Installable Mode</span>
+              </div>
+              <div className="p-3 bg-amber-50 text-amber-600 rounded-xl">
+                <FileText size={24} />
+              </div>
+            </div>
+          </div>
+
+          {/* Shortcut Bar & Announcements Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            {/* Left 2 Columns: Quick Actions & System Feeds */}
+            <div className="lg:col-span-2 space-y-6">
+              <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                <h3 className="text-sm font-bold text-slate-800 mb-4">Pintasan Menu Utama</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {['Live Attendance', 'Data Karyawan', 'Slip Gaji', 'Pengumuman'].map((menu, idx) => (
+                    <button key={idx} className="p-3 text-left bg-slate-50 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg border border-slate-100 transition-all text-xs font-semibold text-slate-700">
+                      {menu}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                <h3 className="text-sm font-bold text-slate-800 mb-3">Pengumuman Perusahaan</h3>
+                <div className="p-4 bg-slate-50 rounded-lg border border-slate-100 text-sm text-slate-600 space-y-2">
+                  <p className="font-semibold text-slate-800">📢 Pembaruan Sistem Absensi & Gaji</p>
+                  <p className="text-xs text-slate-500">
+                    Database baru telah aktif menggunakan migrasi Cloud Supabase. Seluruh data absensi karyawan kini tercatat secara real-time dan terintegrasi penuh dengan PWA Android.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column: Activity / Info Widget */}
+            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+              <h3 className="text-sm font-bold text-slate-800">Informasi Sistem</h3>
+              <div className="space-y-3 text-xs text-slate-600">
+                <div className="flex justify-between py-2 border-b border-slate-100">
+                  <span className="text-slate-400">Hosting</span>
+                  <span className="font-semibold text-slate-700">Netlify Production</span>
+                </div>
+                <div className="flex justify-between py-2 border-b border-slate-100">
+                  <span className="text-slate-400">Database</span>
+                  <span className="font-semibold text-slate-700">Supabase Free Tier</span>
+                </div>
+                <div className="flex justify-between py-2 border-b border-slate-100">
+                  <span className="text-slate-400">PWA Manifest</span>
+                  <span className="font-semibold text-emerald-600">Active</span>
+                </div>
+                <div className="flex justify-between py-2">
+                  <span className="text-slate-400">Versi UI</span>
+                  <span className="font-semibold text-slate-700">v2.4 Enterprise</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+        </main>
       </div>
 
-      <div style={{ display: 'flex', gap: '10px', marginBottom: '16px', flexWrap: 'wrap' }}>
-        <button onClick={handleExportExcel} style={{ background: '#34d399', color: '#0f172a', border: 'none', padding: '8px 14px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px' }}>
-          Export Database ke Excel (.csv)
-        </button>
-        <button onClick={handleExportAbsensiExcel} style={{ background: '#38bdf8', color: '#0f172a', border: 'none', padding: '8px 14px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px' }}>
-          📥 Export Laporan Absensi ke Excel (.csv)
-        </button>
-      </div>
-
-      <h3 style={{ fontSize: '15px', color: '#fff', marginBottom: '12px', fontWeight: 'bold' }}>Daftar Seluruh Akun yang Mendaftar di Sistem</h3>
-      <div style={{ overflowX: 'auto', maxHeight: '350px', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '8px', marginBottom: '24px', background: 'rgba(15,23,42,0.6)' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px', color: '#fff' }}>
-          <thead>
-            <tr style={{ background: 'rgba(30, 41, 59, 0.9)', borderBottom: '2px solid rgba(255,255,255,0.2)', color: '#cbd5e1' }}>
-              <th style={{ padding: '10px' }}>Nama</th>
-              <th style={{ padding: '10px' }}>Jabatan</th>
-              <th style={{ padding: '10px' }}>NIK / No. Telp</th>
-              <th style={{ padding: '10px' }}>Ibu Kandung & Alamat</th>
-              <th style={{ padding: '10px' }}>Rekening Bank</th>
-              <th style={{ padding: '10px' }}>Email Gmail</th>
-              <th style={{ padding: '10px' }}>Aksi</th>
-            </tr>
-          </thead>
-          <tbody>
-            {daftarKaryawan.length === 0 ? (
-              <tr><td colSpan={7} style={{ padding: '20px', textAlign: 'center', color: '#94a3b8' }}>Belum ada data pendaftar.</td></tr>
-            ) : (
-              daftarKaryawan.map(k => (
-                <tr key={k.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-                  <td style={{ padding: '10px', fontWeight: 'bold', color: '#fff' }}>{k.nama}</td>
-                  <td style={{ padding: '10px', color: '#cbd5e1' }}>{k.jabatan}</td>
-                  <td style={{ padding: '10px', color: '#e2e8f0' }}>NIK: {k.nik_ktp || '-'}<br/>Telp: {k.no_telp || '-'}</td>
-                  <td style={{ padding: '10px', color: '#e2e8f0' }}>Ibu: {k.nama_ibu_kandung || '-'}<br/>Alamat: {k.alamat_rumah || '-'}</td>
-                  <td style={{ padding: '10px', color: '#e2e8f0' }}>{k.nama_rekening || '-'}<br/>{k.no_rekening || '-'}</td>
-                  <td style={{ padding: '10px', color: '#38bdf8' }}>{k.email || '-'}</td>
-                  <td style={{ padding: '10px' }}>
-                    <button onClick={() => handleHapusKaryawan(k.id, k.nama)} style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' }}>Hapus</button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      <h3 style={{ fontSize: '15px', color: '#fff', marginBottom: '12px', fontWeight: 'bold' }}>📸 Live Monitoring Absensi & Selfie Karyawan</h3>
-      <div style={{ overflowX: 'auto', maxHeight: '350px', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '8px', background: 'rgba(15,23,42,0.6)' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px', color: '#fff' }}>
-          <thead>
-            <tr style={{ background: 'rgba(30, 41, 59, 0.9)', borderBottom: '2px solid rgba(255,255,255,0.2)', color: '#cbd5e1' }}>
-              <th style={{ padding: '10px' }}>Foto Selfie</th>
-              <th style={{ padding: '10px' }}>ID Karyawan</th>
-              <th style={{ padding: '10px' }}>Nama Pegawai</th>
-              <th style={{ padding: '10px' }}>Tanggal</th>
-              <th style={{ padding: '10px' }}>Jam Masuk</th>
-              <th style={{ padding: '10px' }}>Jam Pulang</th>
-              <th style={{ padding: '10px' }}>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {daftarAbsensi.length === 0 ? (
-              <tr><td colSpan={7} style={{ padding: '20px', textAlign: 'center', color: '#94a3b8' }}>Belum ada data absensi hari ini.</td></tr>
-            ) : (
-              daftarAbsensi.map((absen: any, idx: number) => (
-                <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-                  <td style={{ padding: '10px' }}>
-                    {absen.foto ? (
-                      <img src={absen.foto} alt="Selfie" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', border: '1px solid rgba(255,255,255,0.3)' }} />
-                    ) : (
-                      <span style={{ color: '#94a3b8', fontSize: '11px' }}>Tanpa Foto</span>
-                    )}
-                  </td>
-                  <td style={{ padding: '10px', color: '#cbd5e1' }}>{absen.id_karyawan || '-'}</td>
-                  <td style={{ padding: '10px', fontWeight: 'bold', color: '#fff' }}>{absen.nama}</td>
-                  <td style={{ padding: '10px', color: '#cbd5e1' }}>{absen.tanggal}</td>
-                  <td style={{ padding: '10px', color: '#34d399', fontWeight: 'bold' }}>{absen.jam_masuk || '-'}</td>
-                  <td style={{ padding: '10px', color: '#f87171', fontWeight: 'bold' }}>{absen.jam_pulang || 'Belum Pulang'}</td>
-                  <td style={{ padding: '10px' }}>
-                    <span style={{ background: 'rgba(56, 189, 248, 0.2)', color: '#38bdf8', padding: '3px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold', border: '1px solid rgba(56, 189, 248, 0.4)' }}>
-                      {absen.status || 'Hadir'}
-                    </span>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
     </div>
   );
 }
