@@ -33,6 +33,8 @@ interface Absensi {
 }
 
 export default function DashboardAdmin() {
+  const [currentPage, setCurrentPage] = useState('dashboard');
+  const [activeMenu, setActiveMenu] = useState('Home');
   /*
    * =====================================================
    * LOGIN
@@ -201,6 +203,7 @@ export default function DashboardAdmin() {
 
   const handleMenuClick = (page: string) => {
     setActivePage(page);
+    setCurrentPage('dashboard');
   };
 
   /*
@@ -216,6 +219,7 @@ export default function DashboardAdmin() {
     setDaftarKaryawan([]);
     setDaftarAbsensi([]);
     setActivePage('home');
+    setCurrentPage('dashboard');
   };
 
   /*
@@ -1068,74 +1072,6 @@ export default function DashboardAdmin() {
    * =====================================================
    */
 
-  const RecruitmentPage = () => {
-    return (
-      <section className="data-section">
-
-        <div className="data-header">
-          <div>
-            <h2>Recruitment</h2>
-            <p>
-              Kelola proses penerimaan karyawan baru
-            </p>
-          </div>
-
-          <button
-            className="export-green"
-            onClick={() =>
-              alert('Form tambah kandidat akan dibuat di sini.')
-            }
-          >
-            + Add Candidate
-          </button>
-        </div>
-
-        <div className="stats-grid">
-
-          <div className="dashboard-card">
-            <h3>Total Candidates</h3>
-            <h1>0</h1>
-          </div>
-
-          <div className="dashboard-card">
-            <h3>Interview</h3>
-            <h1>0</h1>
-          </div>
-
-          <div className="dashboard-card">
-            <h3>Hired</h3>
-            <h1>0</h1>
-          </div>
-
-        </div>
-
-        <div className="table-wrapper">
-
-          <table>
-            <thead>
-              <tr>
-                <th>Nama Kandidat</th>
-                <th>Posisi</th>
-                <th>Status</th>
-                <th>Tanggal</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              <tr>
-                <td colSpan={4} className="empty-table">
-                  Belum ada kandidat recruitment.
-                </td>
-              </tr>
-            </tbody>
-          </table>
-
-        </div>
-
-      </section>
-    );
-  };
-
   /*
    * =====================================================
    * HALAMAN FINANCE
@@ -1233,59 +1169,59 @@ export default function DashboardAdmin() {
             className="export-green"
             onClick={() =>
               alert('Generate payroll akan dibuat di sini.')
-            }
+          }
           >
             + Generate Payroll
-          </button>
+        </button>
+      </div>
+
+      <div className="stats-grid">
+
+        <div className="dashboard-card">
+          <h3>Total Karyawan</h3>
+          <h1>{daftarKaryawan.length}</h1>
         </div>
 
-        <div className="stats-grid">
-
-          <div className="dashboard-card">
-            <h3>Total Karyawan</h3>
-            <h1>{daftarKaryawan.length}</h1>
-          </div>
-
-          <div className="dashboard-card">
-            <h3>Total Payroll</h3>
-            <h1>Rp 0</h1>
-          </div>
-
-          <div className="dashboard-card">
-            <h3>Status</h3>
-            <h1>Draft</h1>
-          </div>
-
+        <div className="dashboard-card">
+          <h3>Total Payroll</h3>
+          <h1>Rp 0</h1>
         </div>
 
-        <div className="table-wrapper">
-          <table>
-            <thead>
-              <tr>
-                <th>Nama</th>
-                <th>Periode</th>
-                <th>Gaji Pokok</th>
-                <th>Total Gaji</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              <tr>
-                <td
-                  colSpan={5}
-                  className="empty-table"
-                >
-                  Belum ada data payroll.
-                </td>
-              </tr>
-            </tbody>
-          </table>
+        <div className="dashboard-card">
+          <h3>Status</h3>
+          <h1>Draft</h1>
         </div>
 
-      </section>
-    );
-  };
+      </div>
+
+      <div className="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Nama</th>
+              <th>Periode</th>
+              <th>Gaji Pokok</th>
+              <th>Total Gaji</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr>
+              <td
+                colSpan={5}
+                className="empty-table"
+              >
+                Belum ada data payroll.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </section>
+  );
+};
 
   /*
    * =====================================================
@@ -1311,23 +1247,24 @@ export default function DashboardAdmin() {
           <div className="dashboard-card">
             <h3>Total Kehadiran</h3>
             <h1>{daftarAbsensi.length}</h1>
-          </div>
+      <div></div>
+        </div>
 
           <div className="dashboard-card">
             <h3>Performance</h3>
             <h1>0%</h1>
-          </div>
+        </div>
 
           <div className="dashboard-card">
             <h3>Task Completed</h3>
             <h1>0</h1>
-          </div>
-
         </div>
 
-      </section>
-    );
-  };
+    </div>
+
+    </section>
+  );
+};
 
   /*
    * =====================================================
@@ -1366,16 +1303,17 @@ export default function DashboardAdmin() {
             className="export-green"
             onClick={() =>
               alert('Pengaturan profil perusahaan.')
-            }
-          >
-            Edit Company Profile
-          </button>
+          }
+        >
+          Edit Company Profile
+        </button>
 
-        </div>
+  </div>
 
-      </section>
-    );
-  };
+  <div></div>
+    </section>
+  );
+};
 
   /*
    * =====================================================
@@ -1518,13 +1456,14 @@ export default function DashboardAdmin() {
             onClick={handleLogoutAdmin}
           >
             Logout Account
-          </button>
+        </button>
 
-        </div>
+  </div>
 
-      </section>
-    );
-  };
+  <div></div>
+    </section>
+  );
+};
 
   /*
    * =====================================================
@@ -1578,110 +1517,55 @@ export default function DashboardAdmin() {
 
   /*
    * =====================================================
-   * DASHBOARD UTAMA
+   * DASHBOARD UTAMA (REVISI STRUKTUR RETURN YANG BENAR)
    * =====================================================
    */
 
   return (
     <div className="hris-app">
-
-      {/* =================================================
-          SIDEBAR
-      ================================================= */}
-
       <aside className="sidebar">
-
-        <div className="logo-area">
-
-          <div className="logo-text">
-            Moonjustfine
-          </div>
-
-          <div className="logo-divider"></div>
-
-          <span className="hris-text">
-            HRIS
-          </span>
-
-        </div>
-
         <nav className="sidebar-menu">
 
           <button
-            className={`menu-item ${
-              activePage === 'home'
-                ? 'active'
-                : ''
-            }`}
-            onClick={() =>
-              handleMenuClick('home')
-            }
+            className={`menu-item ${activePage === 'home' ? 'active' : ''}`}
+            onClick={() => handleMenuClick('home')}
           >
             <span className="menu-icon">⌂</span>
             <span>Home</span>
           </button>
 
           <button
-            className={`menu-item ${
-              activePage === 'employee-profile'
-                ? 'active'
-                : ''
-            }`}
-            onClick={() =>
-              handleMenuClick('employee-profile')
-            }
+            className={`menu-item ${activePage === 'employee-profile' ? 'active' : ''}`}
+            onClick={() => handleMenuClick('employee-profile')}
           >
             <span className="menu-icon">◎</span>
             <span>Employee profile</span>
           </button>
 
           <button
-            className={`menu-item ${
-              activePage === 'employees'
-                ? 'active'
-                : ''
-            }`}
-            onClick={() =>
-              handleMenuClick('employees')
-            }
+            className={`menu-item ${activePage === 'employees' ? 'active' : ''}`}
+            onClick={() => handleMenuClick('employees')}
           >
             <span className="menu-icon">♙</span>
             <span>Employees</span>
             <span className="arrow">›</span>
           </button>
 
-         <button
-  className={`menu-item ${
-    currentPage === 'recruitment'
-      ? 'active'
-      : ''
-  }`}
-  onClick={() => {
-    setCurrentPage('recruitment');
-    setActiveMenu('Recruitment');
-  }}
->
-  <span className="menu-icon">
-    ♧
-  </span>
-
-  <span>
-    Recruitment
-  </span>
-
-  <span className="arrow">
-    ›
-  </span>
-</button>
           <button
-            className={`menu-item ${
-              activePage === 'finance'
-                ? 'active'
-                : ''
-            }`}
-            onClick={() =>
-              handleMenuClick('finance')
-            }
+            className={`menu-item ${currentPage === 'recruitment' ? 'active' : ''}`}
+            onClick={() => {
+              setCurrentPage('recruitment');
+              setActiveMenu('Recruitment');
+            }}
+          >
+            <span className="menu-icon">♧</span>
+            <span>Recruitment</span>
+            <span className="arrow">›</span>
+          </button>
+
+          <button
+            className={`menu-item ${activePage === 'finance' ? 'active' : ''}`}
+            onClick={() => handleMenuClick('finance')}
           >
             <span className="menu-icon">▣</span>
             <span>Finance</span>
@@ -1689,14 +1573,8 @@ export default function DashboardAdmin() {
           </button>
 
           <button
-            className={`menu-item ${
-              activePage === 'payroll'
-                ? 'active'
-                : ''
-            }`}
-            onClick={() =>
-              handleMenuClick('payroll')
-            }
+            className={`menu-item ${activePage === 'payroll' ? 'active' : ''}`}
+            onClick={() => handleMenuClick('payroll')}
           >
             <span className="menu-icon">▤</span>
             <span>Payroll</span>
@@ -1704,14 +1582,8 @@ export default function DashboardAdmin() {
           </button>
 
           <button
-            className={`menu-item ${
-              activePage === 'productivity'
-                ? 'active'
-                : ''
-            }`}
-            onClick={() =>
-              handleMenuClick('productivity')
-            }
+            className={`menu-item ${activePage === 'productivity' ? 'active' : ''}`}
+            onClick={() => handleMenuClick('productivity')}
           >
             <span className="menu-icon">✓</span>
             <span>Productivity</span>
@@ -1719,14 +1591,8 @@ export default function DashboardAdmin() {
           </button>
 
           <button
-            className={`menu-item ${
-              activePage === 'company'
-                ? 'active'
-                : ''
-            }`}
-            onClick={() =>
-              handleMenuClick('company')
-            }
+            className={`menu-item ${activePage === 'company' ? 'active' : ''}`}
+            onClick={() => handleMenuClick('company')}
           >
             <span className="menu-icon">▥</span>
             <span>Company</span>
@@ -1736,14 +1602,8 @@ export default function DashboardAdmin() {
           <div className="sidebar-separator"></div>
 
           <button
-            className={`menu-item ${
-              activePage === 'applications'
-                ? 'active'
-                : ''
-            }`}
-            onClick={() =>
-              handleMenuClick('applications')
-            }
+            className={`menu-item ${activePage === 'applications' ? 'active' : ''}`}
+            onClick={() => handleMenuClick('applications')}
           >
             <span className="menu-icon">◇</span>
             <span>Applications</span>
@@ -1751,14 +1611,8 @@ export default function DashboardAdmin() {
           </button>
 
           <button
-            className={`menu-item ${
-              activePage === 'integrations'
-                ? 'active'
-                : ''
-            }`}
-            onClick={() =>
-              handleMenuClick('integrations')
-            }
+            className={`menu-item ${activePage === 'integrations' ? 'active' : ''}`}
+            onClick={() => handleMenuClick('integrations')}
           >
             <span className="menu-icon">♢</span>
             <span>Integrations</span>
@@ -1768,14 +1622,8 @@ export default function DashboardAdmin() {
           <div className="sidebar-separator"></div>
 
           <button
-            className={`menu-item ${
-              activePage === 'settings'
-                ? 'active'
-                : ''
-            }`}
-            onClick={() =>
-              handleMenuClick('settings')
-            }
+            className={`menu-item ${activePage === 'settings' ? 'active' : ''}`}
+            onClick={() => handleMenuClick('settings')}
           >
             <span className="menu-icon">⚙</span>
             <span>Settings</span>
@@ -1790,32 +1638,17 @@ export default function DashboardAdmin() {
 
       </aside>
 
-      {/* =================================================
-          MAIN
-      ================================================= */}
-
       <main className="main-content">
 
         <header className="topbar">
 
           <div className="topbar-left">
-
-            <button className="mobile-menu">
-              ☰
-            </button>
-
-            <span className="top-title">
-              HRIS
-            </span>
-
-            <span className="top-arrow">
-              ▼
-            </span>
-
+            <button className="mobile-menu">☰</button>
+            <span className="top-title">HRIS</span>
+            <span className="top-arrow">▼</span>
           </div>
 
           <div className="topbar-right">
-
             <button
               className="summary-button"
               onClick={() =>
@@ -1828,13 +1661,8 @@ export default function DashboardAdmin() {
               ✨ Summarize data
             </button>
 
-            <button className="top-icon">
-              ＋
-            </button>
-
-            <button className="top-icon">
-              ⌕
-            </button>
+            <button className="top-icon">＋</button>
+            <button className="top-icon">⌕</button>
 
             <button className="top-icon notification">
               ♧
@@ -1843,54 +1671,32 @@ export default function DashboardAdmin() {
               </span>
             </button>
 
-            <button className="apps-button">
-              •••
-            </button>
+            <button className="apps-button">•••</button>
 
             <div className="profile-area">
-
-              <div className="profile-avatar">
-                TK
-              </div>
-
+              <div className="profile-avatar">TK</div>
               <div className="profile-info">
                 <strong>tirta kusuma</strong>
                 <small>moonjustfine</small>
               </div>
-
             </div>
 
           </div>
 
         </header>
 
-        {/* =================================================
-            KONTEN HALAMAN BERUBAH DI SINI
-        ================================================= */}
-
         <div className="dashboard-container">
-
-          {renderPage()}
-
+          {currentPage === 'recruitment' ? <RecruitmentPage /> : renderPage()}
         </div>
 
       </main>
 
-      {/* =================================================
-          MODAL TAMBAH KARYAWAN
-      ================================================= */}
-
       {showAddEmployee && (
         <div className="modal-overlay">
-
           <div className="modal-card">
-
             <h2>Tambah Karyawan</h2>
-
             <form onSubmit={handleAddEmployee}>
-
               <label>Nama Lengkap</label>
-
               <input
                 type="text"
                 value={newEmployee.nama}
@@ -1904,7 +1710,6 @@ export default function DashboardAdmin() {
               />
 
               <label>Jabatan</label>
-
               <input
                 type="text"
                 value={newEmployee.jabatan}
@@ -1918,7 +1723,6 @@ export default function DashboardAdmin() {
               />
 
               <label>Email</label>
-
               <input
                 type="email"
                 value={newEmployee.email}
@@ -1932,7 +1736,6 @@ export default function DashboardAdmin() {
               />
 
               <label>No. Telepon</label>
-
               <input
                 type="text"
                 value={newEmployee.no_telp}
@@ -1946,7 +1749,6 @@ export default function DashboardAdmin() {
               />
 
               <div className="modal-actions">
-
                 <button
                   type="button"
                   onClick={() =>
@@ -1955,50 +1757,24 @@ export default function DashboardAdmin() {
                 >
                   Batal
                 </button>
-
                 <button type="submit">
                   Simpan
                 </button>
-
               </div>
-
             </form>
-
           </div>
-
         </div>
       )}
 
-      {/* =================================================
-          MODAL CUTI
-      ================================================= */}
-
       {showLeaveRequest && (
         <div className="modal-overlay">
-
           <div className="modal-card">
-
             <h2>Request Time Off</h2>
-
-            <p>
-              Form pengajuan cuti karyawan.
-            </p>
-
-            <input
-              type="text"
-              placeholder="Jenis cuti"
-            />
-
-            <input
-              type="date"
-            />
-
-            <textarea
-              placeholder="Alasan cuti"
-            />
-
+            <p>Form pengajuan cuti karyawan.</p>
+            <input type="text" placeholder="Jenis cuti" />
+            <input type="date" />
+            <textarea placeholder="Alasan cuti" />
             <div className="modal-actions">
-
               <button
                 onClick={() =>
                   setShowLeaveRequest(false)
@@ -2006,7 +1782,6 @@ export default function DashboardAdmin() {
               >
                 Batal
               </button>
-
               <button
                 onClick={() => {
                   alert('Pengajuan cuti berhasil dibuat.');
@@ -2015,47 +1790,21 @@ export default function DashboardAdmin() {
               >
                 Ajukan
               </button>
-
             </div>
-
           </div>
-
         </div>
       )}
 
-      {/* =================================================
-          MODAL LEMBUR
-      ================================================= */}
-
       {showOvertimeRequest && (
         <div className="modal-overlay">
-
           <div className="modal-card">
-
             <h2>Request Overtime</h2>
-
-            <p>
-              Form pengajuan lembur karyawan.
-            </p>
-
-            <input
-              type="date"
-            />
-
-            <input
-              type="time"
-            />
-
-            <input
-              type="time"
-            />
-
-            <textarea
-              placeholder="Alasan lembur"
-            />
-
+            <p>Form pengajuan lembur karyawan.</p>
+            <input type="date" />
+            <input type="time" />
+            <input type="time" />
+            <textarea placeholder="Alasan lembur" />
             <div className="modal-actions">
-
               <button
                 onClick={() =>
                   setShowOvertimeRequest(false)
@@ -2063,7 +1812,6 @@ export default function DashboardAdmin() {
               >
                 Batal
               </button>
-
               <button
                 onClick={() => {
                   alert('Pengajuan lembur berhasil dibuat.');
@@ -2072,11 +1820,8 @@ export default function DashboardAdmin() {
               >
                 Ajukan
               </button>
-
             </div>
-
           </div>
-
         </div>
       )}
 
