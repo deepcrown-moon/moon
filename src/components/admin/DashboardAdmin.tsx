@@ -53,17 +53,19 @@ export default function DashboardAdmin() {
   };
 
   return (
-    <div className="flex h-screen bg-slate-50 font-sans overflow-hidden">
-      <aside className="w-64 bg-slate-900 text-slate-300 flex flex-col border-r border-slate-800 hidden md:flex">
+    <div className="flex h-screen bg-slate-100 font-sans overflow-hidden">
+      
+      {/* SIDEBAR MENU SAMPING KIRI */}
+      <aside className="w-64 bg-slate-900 text-slate-300 flex flex-col shadow-xl z-20">
         <div className="p-5 flex items-center space-x-3 border-b border-slate-800">
-          <div className="bg-indigo-600 text-white p-2 rounded-lg font-bold text-lg">M</div>
+          <div className="bg-indigo-600 text-white p-2 rounded-lg font-bold text-lg shadow-md">M</div>
           <div>
             <h1 className="text-white font-bold text-sm tracking-wider">MOONLIGHT HRIS</h1>
             <p className="text-xs text-slate-400">Enterprise Edition</p>
           </div>
         </div>
 
-        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+        <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto">
           {[
             { name: 'Home', icon: LayoutDashboard },
             { name: 'Employee Profile', icon: Users },
@@ -79,7 +81,7 @@ export default function DashboardAdmin() {
               <button
                 key={item.name}
                 onClick={() => setActiveMenu(item.name)}
-                className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
                   isActive 
                     ? 'bg-indigo-600 text-white shadow-md' 
                     : 'hover:bg-slate-800 hover:text-white text-slate-400'
@@ -103,17 +105,20 @@ export default function DashboardAdmin() {
         </div>
       </aside>
 
+      {/* KONTEN UTAMA KANAN */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 z-10">
+        
+        {/* TOP HEADER */}
+        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 shadow-sm z-10">
           <div className="flex items-center space-x-4">
-            <span className="text-xs bg-indigo-50 text-indigo-600 px-2.5 py-1 rounded-md font-semibold border border-indigo-100">
+            <span className="text-xs bg-indigo-50 text-indigo-600 px-3 py-1 rounded-md font-bold border border-indigo-100 uppercase tracking-wide">
               PRODUKSI ACTIVE
             </span>
-            <span className="text-sm text-slate-500 hidden sm:inline">PT. Moonlight Indonesia</span>
+            <span className="text-sm font-medium text-slate-600">PT. Moonlight Indonesia</span>
           </div>
 
           <div className="flex items-center space-x-4">
-            <div className="relative hidden sm:block">
+            <div className="relative hidden md:block">
               <Search className="absolute left-3 top-2.5 text-slate-400" size={16} />
               <input 
                 type="text" 
@@ -137,7 +142,10 @@ export default function DashboardAdmin() {
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50">
+        {/* BODY UTAMA DASHBOARD */}
+        <main className="flex-1 overflow-y-auto p-6 space-y-6">
+          
+          {/* BANNER UTAMA */}
           <div className="bg-gradient-to-r from-indigo-600 to-indigo-800 rounded-2xl p-6 text-white shadow-lg flex flex-col md:flex-row justify-between items-center">
             <div className="space-y-2 mb-4 md:mb-0">
               <h2 className="text-2xl font-bold tracking-tight">Selamat Datang Kembali, Admin!</h2>
@@ -145,12 +153,13 @@ export default function DashboardAdmin() {
                 Sistem HRIS berjalan normal. Kelola kehadiran, rekapitulasi gaji, dan profil pegawai PT. Moonlight Indonesia dalam satu kendali terpusat.
               </p>
             </div>
-            <div className="bg-white/10 backdrop-blur-md px-5 py-3 rounded-xl border border-white/20 text-center">
-              <p className="text-xs text-indigo-200">Total Karyawan Aktif</p>
-              <p className="text-3xl font-extrabold">{loading ? '...' : totalKaryawan}</p>
+            <div className="bg-white/10 backdrop-blur-md px-6 py-3 rounded-xl border border-white/20 text-center shadow-inner">
+              <p className="text-xs text-indigo-200 uppercase tracking-wider font-semibold">Total Karyawan Aktif</p>
+              <p className="text-3xl font-extrabold mt-1">{loading ? '...' : totalKaryawan}</p>
             </div>
           </div>
 
+          {/* KARTU STATISTIK */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
               <div>
@@ -185,8 +194,10 @@ export default function DashboardAdmin() {
               </div>
             </div>
           </div>
+
         </main>
       </div>
+
     </div>
   );
 }
