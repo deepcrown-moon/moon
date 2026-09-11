@@ -33,24 +33,76 @@ interface Absensi {
 }
 
 export default function DashboardAdmin() {
+  /*
+   * =====================================================
+   * LOGIN
+   * =====================================================
+   */
+
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const [adminUser, setAdminUser] = useState('');
   const [adminPass, setAdminPass] = useState('');
   const [isLoadingLogin, setIsLoadingLogin] = useState(false);
 
-  const [daftarKaryawan, setDaftarKaryawan] = useState<Karyawan[]>([]);
-  const [daftarAbsensi, setDaftarAbsensi] = useState<Absensi[]>([]);
+  /*
+   * =====================================================
+   * NAVIGASI HALAMAN
+   * =====================================================
+   */
 
-  const [loadingKaryawan, setLoadingKaryawan] = useState(false);
-  const [loadingAbsensi, setLoadingAbsensi] = useState(false);
-
-  const [activeMenu, setActiveMenu] = useState('Home');
+  const [activePage, setActivePage] = useState('home');
 
   /*
-   * ============================================================
+   * =====================================================
+   * DATA
+   * =====================================================
+   */
+
+  const [daftarKaryawan, setDaftarKaryawan] =
+    useState<Karyawan[]>([]);
+
+  const [daftarAbsensi, setDaftarAbsensi] =
+    useState<Absensi[]>([]);
+
+  const [loadingKaryawan, setLoadingKaryawan] =
+    useState(false);
+
+  const [loadingAbsensi, setLoadingAbsensi] =
+    useState(false);
+
+  /*
+   * =====================================================
+   * MODAL
+   * =====================================================
+   */
+
+  const [showAddEmployee, setShowAddEmployee] =
+    useState(false);
+
+  const [showLeaveRequest, setShowLeaveRequest] =
+    useState(false);
+
+  const [showOvertimeRequest, setShowOvertimeRequest] =
+    useState(false);
+
+  /*
+   * =====================================================
+   * FORM TAMBAH KARYAWAN
+   * =====================================================
+   */
+
+  const [newEmployee, setNewEmployee] = useState({
+    nama: '',
+    jabatan: '',
+    email: '',
+    no_telp: '',
+  });
+
+  /*
+   * =====================================================
    * LOAD DATA
-   * ============================================================
+   * =====================================================
    */
 
   useEffect(() => {
@@ -69,7 +121,7 @@ export default function DashboardAdmin() {
       .order('nama', { ascending: true });
 
     if (error) {
-      console.error('Gagal mengambil data karyawan:', error);
+      console.error('Gagal mengambil karyawan:', error);
     }
 
     if (data) {
@@ -88,7 +140,7 @@ export default function DashboardAdmin() {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Gagal mengambil data absensi:', error);
+      console.error('Gagal mengambil absensi:', error);
     }
 
     if (data) {
@@ -99,37 +151,32 @@ export default function DashboardAdmin() {
   };
 
   /*
-   * ============================================================
+   * =====================================================
    * LOGIN ADMIN
-   * ============================================================
+   * =====================================================
    */
 
   const handleLoginAdmin = async (e: FormEvent) => {
     e.preventDefault();
 
     if (!adminUser || !adminPass) {
-      alert('Email / username dan PIN wajib diisi.');
+      alert('Username dan password wajib diisi.');
       return;
     }
 
     setIsLoadingLogin(true);
 
-    /*
-     * LOGIN ADMIN DEFAULT
-     *
-     * Catatan:
-     * Untuk produksi sebaiknya diganti Supabase Auth.
-     */
-    if (adminUser === 'admin' && adminPass === 'admin123') {
+    // LOGIN DEMO
+    if (
+      adminUser === 'admin' &&
+      adminPass === 'admin123'
+    ) {
       setIsLoggedIn(true);
       setIsLoadingLogin(false);
       return;
     }
 
-    /*
-     * LOGIN MENGGUNAKAN DATA KARYAWAN
-     */
-
+    // LOGIN DARI DATABASE
     const { data: foundAdmin, error } = await supabase
       .from('karyawan')
       .select('*')
@@ -140,19 +187,41 @@ export default function DashboardAdmin() {
     if (foundAdmin && !error) {
       setIsLoggedIn(true);
     } else {
-      alert(
-        'Login Admin gagal.\n\n' +
-        'Pastikan Email dan PIN benar.'
-      );
+      alert('Login gagal. Email atau PIN salah.');
     }
 
     setIsLoadingLogin(false);
   };
 
   /*
-   * ============================================================
-   * DELETE KARYAWAN
-   * ============================================================
+   * =====================================================
+   * NAVIGASI
+   * =====================================================
+   */
+
+  const handleMenuClick = (page: string) => {
+    setActivePage(page);
+  };
+
+  /*
+   * =====================================================
+   * LOGOUT
+   * =====================================================
+   */
+
+  const handleLogoutAdmin = () => {
+    setIsLoggedIn(false);
+    setAdminUser('');
+    setAdminPass('');
+    setDaftarKaryawan([]);
+    setDaftarAbsensi([]);
+    setActivePage('home');
+  };
+
+  /*
+   * =====================================================
+   * HAPUS KARYAWAN
+   * =====================================================
    */
 
   const handleHapusKaryawan = async (
@@ -160,7 +229,7 @@ export default function DashboardAdmin() {
     nama: string
   ) => {
     const yakin = window.confirm(
-      `Yakin ingin menghapus akun "${nama}" dari database secara permanen?`
+      `Yakin ingin menghapus akun "${nama}"?`
     );
 
     if (!yakin) return;
@@ -171,24 +240,68 @@ export default function DashboardAdmin() {
       .eq('id', id);
 
     if (error) {
-      alert('Gagal menghapus data: ' + error.message);
+      alert('Gagal menghapus: ' + error.message);
       return;
     }
 
-    alert(`Akun ${nama} berhasil dihapus.`);
-
+    alert('Data berhasil dihapus.');
     fetchKaryawan();
   };
 
   /*
-   * ============================================================
-   * EXPORT DATABASE KARYAWAN
-   * ============================================================
+   * =====================================================
+   * TAMBAH KARYAWAN
+   * =====================================================
+   */
+
+  const handleAddEmployee = async (
+    e: FormEvent
+  ) => {
+    e.preventDefault();
+
+    if (!newEmployee.nama || !newEmployee.jabatan) {
+      alert('Nama dan jabatan wajib diisi.');
+      return;
+    }
+
+    const { error } = await supabase
+      .from('karyawan')
+      .insert([
+        {
+          nama: newEmployee.nama,
+          jabatan: newEmployee.jabatan,
+          email: newEmployee.email,
+          no_telp: newEmployee.no_telp,
+        },
+      ]);
+
+    if (error) {
+      alert('Gagal menambah karyawan: ' + error.message);
+      return;
+    }
+
+    alert('Karyawan berhasil ditambahkan.');
+
+    setNewEmployee({
+      nama: '',
+      jabatan: '',
+      email: '',
+      no_telp: '',
+    });
+
+    setShowAddEmployee(false);
+    fetchKaryawan();
+  };
+
+  /*
+   * =====================================================
+   * EXPORT KARYAWAN
+   * =====================================================
    */
 
   const handleExportExcel = () => {
     if (daftarKaryawan.length === 0) {
-      alert('Belum ada data karyawan untuk diexport.');
+      alert('Belum ada data karyawan.');
       return;
     }
 
@@ -222,14 +335,14 @@ export default function DashboardAdmin() {
   };
 
   /*
-   * ============================================================
+   * =====================================================
    * EXPORT ABSENSI
-   * ============================================================
+   * =====================================================
    */
 
   const handleExportAbsensiExcel = () => {
     if (daftarAbsensi.length === 0) {
-      alert('Belum ada data absensi untuk diexport.');
+      alert('Belum ada data absensi.');
       return;
     }
 
@@ -252,12 +365,6 @@ export default function DashboardAdmin() {
     );
   };
 
-  /*
-   * ============================================================
-   * DOWNLOAD CSV
-   * ============================================================
-   */
-
   const downloadCSV = (
     csv: string,
     filename: string
@@ -265,12 +372,11 @@ export default function DashboardAdmin() {
     const blob = new Blob(
       ['\uFEFF' + csv],
       {
-        type: 'text/csv;charset=utf-8;'
+        type: 'text/csv;charset=utf-8;',
       }
     );
 
     const url = URL.createObjectURL(blob);
-
     const link = document.createElement('a');
 
     link.href = url;
@@ -280,60 +386,18 @@ export default function DashboardAdmin() {
     link.click();
 
     document.body.removeChild(link);
-
     URL.revokeObjectURL(url);
   };
 
   /*
-   * ============================================================
-   * LOGOUT
-   * ============================================================
-   */
-
-  const handleLogoutAdmin = () => {
-    setIsLoggedIn(false);
-    setAdminUser('');
-    setAdminPass('');
-    setDaftarKaryawan([]);
-    setDaftarAbsensi([]);
-  };
-
-  /*
-   * ============================================================
-   * SIDEBAR MENU
-   * ============================================================
-   */
-
-  const handleMenuClick = (menu: string) => {
-    setActiveMenu(menu);
-
-    if (menu === 'Employees') {
-      document
-        .getElementById('database-karyawan')
-        ?.scrollIntoView({
-          behavior: 'smooth'
-        });
-    }
-
-    if (menu === 'Time') {
-      document
-        .getElementById('monitoring-absensi')
-        ?.scrollIntoView({
-          behavior: 'smooth'
-        });
-    }
-  };
-
-  /*
-   * ============================================================
+   * =====================================================
    * LOGIN PAGE
-   * ============================================================
+   * =====================================================
    */
 
   if (!isLoggedIn) {
     return (
       <div className="admin-login-page">
-
         <div className="admin-login-card">
 
           <div className="admin-login-logo">
@@ -344,19 +408,14 @@ export default function DashboardAdmin() {
             🔐
           </div>
 
-          <h1>
-            Login Admin
-          </h1>
+          <h1>Login Admin</h1>
 
-          <p>
-            Masuk ke Dashboard HRIS
-          </p>
+          <p>Masuk ke Dashboard HRIS</p>
 
           <form
             onSubmit={handleLoginAdmin}
             className="admin-login-form"
           >
-
             <label>
               Email / Username
             </label>
@@ -368,7 +427,6 @@ export default function DashboardAdmin() {
                 setAdminUser(e.target.value)
               }
               placeholder="Email admin..."
-              autoComplete="username"
             />
 
             <label>
@@ -382,7 +440,6 @@ export default function DashboardAdmin() {
                 setAdminPass(e.target.value)
               }
               placeholder="PIN / Password..."
-              autoComplete="current-password"
             />
 
             <button
@@ -393,7 +450,6 @@ export default function DashboardAdmin() {
                 ? 'Memproses...'
                 : 'Masuk Dashboard Admin'}
             </button>
-
           </form>
 
           <div className="admin-login-hint">
@@ -405,23 +461,1133 @@ export default function DashboardAdmin() {
           </div>
 
         </div>
-
       </div>
     );
   }
 
   /*
-   * ============================================================
-   * DASHBOARD
-   * ============================================================
+   * =====================================================
+   * KOMPONEN HALAMAN HOME
+   * =====================================================
+   */
+
+  const HomePage = () => {
+    return (
+      <>
+        <section className="welcome-card">
+
+          <div className="welcome-content">
+            <h1>
+              Good morning, tirta kusuma!
+            </h1>
+
+            <p className="date-text">
+              It's Saturday, 12 September
+            </p>
+
+            <div className="shortcut-title">
+              Shortcut
+            </div>
+
+            <div className="shortcut-buttons">
+
+              <button
+                onClick={() =>
+                  handleMenuClick('time')
+                }
+              >
+                Live attendance
+              </button>
+
+              <button
+                onClick={() =>
+                  setShowLeaveRequest(true)
+                }
+              >
+                Request time off
+              </button>
+
+              <button
+                onClick={() =>
+                  setShowOvertimeRequest(true)
+                }
+              >
+                Request overtime
+              </button>
+
+              <button
+                onClick={() =>
+                  alert('Pilih menu cuti atau lembur.')
+                }
+              >
+                More request ⌄
+              </button>
+
+            </div>
+          </div>
+
+          <div className="welcome-illustration">
+            <div className="check-bubble">
+              ✓
+            </div>
+
+            <div className="person-icon">
+              👩🏻‍💼
+            </div>
+          </div>
+
+        </section>
+
+        <section className="stats-grid">
+
+          <div className="dashboard-card">
+            <div className="card-header">
+              <span>Employment Status</span>
+              <span>⋮</span>
+            </div>
+
+            <div className="progress-wrapper">
+              <div className="progress-bar">
+                <div
+                  className="progress-value"
+                  style={{
+                    width:
+                      daftarKaryawan.length > 0
+                        ? '100%'
+                        : '0%',
+                  }}
+                />
+              </div>
+            </div>
+
+            <div className="stat-total">
+              <span>Total</span>
+              <strong>
+                {daftarKaryawan.length}
+              </strong>
+            </div>
+
+            <div className="stat-row">
+              <span>
+                <i className="blue-dot"></i>
+                Permanent
+              </span>
+
+              <span>
+                {daftarKaryawan.length}
+              </span>
+
+              <span>
+                {daftarKaryawan.length > 0
+                  ? '100%'
+                  : '0%'}
+              </span>
+            </div>
+
+            <div className="card-footer">
+              Filter ⌄
+            </div>
+          </div>
+
+          <div className="dashboard-card">
+            <div className="card-header">
+              <span>Length of Service</span>
+              <span>⋮</span>
+            </div>
+
+            <div className="service-chart">
+              <div className="chart-line line-1"></div>
+              <div className="chart-line line-2"></div>
+              <div className="chart-line line-3"></div>
+              <div className="chart-bar"></div>
+              <div className="chart-label">
+                &gt; 10 yr
+              </div>
+            </div>
+
+            <div className="card-footer">
+              Filter ⌄
+            </div>
+          </div>
+
+          <div className="dashboard-card">
+            <div className="card-header">
+              <span>Job Level</span>
+              <span>⋮</span>
+            </div>
+
+            <div className="empty-chart">
+              No matching data found
+            </div>
+
+            <div className="card-footer">
+              Filter ⌄
+            </div>
+          </div>
+
+          <div className="dashboard-card">
+            <div className="card-header">
+              <span>Gender Diversity</span>
+              <span>⋮</span>
+            </div>
+
+            <div className="donut-container">
+              <div className="donut">
+                <div className="donut-inner">
+                  {daftarKaryawan.length}
+                </div>
+              </div>
+            </div>
+
+            <div className="gender-label">
+              <span>
+                <i className="blue-dot"></i>
+                Not Filled
+              </span>
+
+              <span>
+                {daftarKaryawan.length}
+              </span>
+            </div>
+
+            <div className="card-footer">
+              Filter ⌄
+            </div>
+          </div>
+
+        </section>
+
+        <section className="lower-grid">
+
+          <div className="dashboard-card quick-links">
+            <div className="section-title">
+              Quick Links
+            </div>
+
+            <button
+              onClick={() =>
+                handleMenuClick('employee-profile')
+              }
+            >
+              ● Employee profile
+            </button>
+
+            <button
+              onClick={() =>
+                setShowAddEmployee(true)
+              }
+            >
+              ♟ Add Employee
+            </button>
+
+            <button
+              onClick={() =>
+                handleMenuClick('time')
+              }
+            >
+              ▣ Attendance
+            </button>
+
+            <button
+              onClick={() =>
+                handleMenuClick('payroll')
+              }
+            >
+              ▤ Payroll
+            </button>
+          </div>
+
+          <div className="promo-card">
+            <div className="promo-icon">
+              📣
+            </div>
+
+            <div>
+              <h2>
+                Yuk jadi bagian dari
+                <br />
+                Moonjustfine
+              </h2>
+
+              <p>
+                Berikan feedback agar Moonjustfine
+                <br />
+                selalu menghadirkan berbagai fitur
+                <br />
+                terbaik!
+              </p>
+
+              <button
+                onClick={() =>
+                  alert('Terima kasih atas feedback kamu!')
+                }
+              >
+                Berikan feedback
+              </button>
+            </div>
+          </div>
+
+          <div className="dashboard-card whos-off">
+            <div className="section-title">
+              Who's Off
+              <span className="today">
+                Today ⌄
+              </span>
+            </div>
+
+            <div className="off-empty">
+              No employee off today
+            </div>
+          </div>
+
+        </section>
+
+      </>
+    );
+  };
+
+  /*
+   * =====================================================
+   * HALAMAN EMPLOYEE PROFILE
+   * =====================================================
+   */
+
+  const EmployeeProfilePage = () => {
+    return (
+      <section className="data-section">
+
+        <div className="data-header">
+          <div>
+            <h2>Employee Profile</h2>
+            <p>
+              Informasi profil seluruh karyawan
+            </p>
+          </div>
+
+          <button
+            className="export-green"
+            onClick={() =>
+              handleMenuClick('employees')
+            }
+          >
+            Lihat Semua Karyawan
+          </button>
+        </div>
+
+        <div className="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Nama</th>
+                <th>Jabatan</th>
+                <th>Email</th>
+                <th>No. Telepon</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {daftarKaryawan.map((k) => (
+                <tr key={k.id}>
+                  <td>{k.nama}</td>
+                  <td>{k.jabatan}</td>
+                  <td>{k.email || '-'}</td>
+                  <td>{k.no_telp || '-'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+      </section>
+    );
+  };
+
+  /*
+   * =====================================================
+   * HALAMAN EMPLOYEES
+   * =====================================================
+   */
+
+  const EmployeesPage = () => {
+    return (
+      <section className="data-section">
+
+        <div className="data-header">
+
+          <div>
+            <h2>Employees</h2>
+            <p>
+              Kelola seluruh data karyawan
+            </p>
+          </div>
+
+          <div className="data-actions">
+
+            <button
+              className="export-green"
+              onClick={() =>
+                setShowAddEmployee(true)
+              }
+            >
+              + Add Employee
+            </button>
+
+            <button
+              className="export-blue"
+              onClick={handleExportExcel}
+            >
+              ↓ Export Database
+            </button>
+
+          </div>
+
+        </div>
+
+        <div className="table-wrapper">
+
+          <table>
+            <thead>
+              <tr>
+                <th>Nama</th>
+                <th>Jabatan</th>
+                <th>NIK / No. Telp</th>
+                <th>Email</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+
+            <tbody>
+
+              {loadingKaryawan ? (
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="empty-table"
+                  >
+                    Memuat data...
+                  </td>
+                </tr>
+              ) : daftarKaryawan.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="empty-table"
+                  >
+                    Belum ada karyawan.
+                  </td>
+                </tr>
+              ) : (
+                daftarKaryawan.map((k) => (
+                  <tr key={k.id}>
+
+                    <td>
+                      <strong>{k.nama}</strong>
+                    </td>
+
+                    <td>
+                      {k.jabatan || '-'}
+                    </td>
+
+                    <td>
+                      NIK: {k.nik_ktp || '-'}
+                      <br />
+                      Telp: {k.no_telp || '-'}
+                    </td>
+
+                    <td className="email-cell">
+                      {k.email || '-'}
+                    </td>
+
+                    <td>
+                      <button
+                        className="delete-button"
+                        onClick={() =>
+                          handleHapusKaryawan(
+                            k.id,
+                            k.nama
+                          )
+                        }
+                      >
+                        Hapus
+                      </button>
+                    </td>
+
+                  </tr>
+                ))
+              )}
+
+            </tbody>
+          </table>
+
+        </div>
+
+      </section>
+    );
+  };
+
+  /*
+   * =====================================================
+   * HALAMAN TIME / ABSENSI
+   * =====================================================
+   */
+
+  const TimePage = () => {
+    return (
+      <section className="data-section">
+
+        <div className="data-header">
+
+          <div>
+            <h2>
+              📸 Attendance & Live Monitoring
+            </h2>
+
+            <p>
+              Monitoring kehadiran karyawan
+            </p>
+          </div>
+
+          <div className="data-actions">
+
+            <button
+              className="refresh-button"
+              onClick={fetchAbsensi}
+            >
+              ↻ Refresh
+            </button>
+
+            <button
+              className="export-blue"
+              onClick={handleExportAbsensiExcel}
+            >
+              ↓ Export Absensi
+            </button>
+
+          </div>
+
+        </div>
+
+        <div className="table-wrapper">
+
+          <table>
+            <thead>
+              <tr>
+                <th>Foto</th>
+                <th>ID Karyawan</th>
+                <th>Nama</th>
+                <th>Tanggal</th>
+                <th>Jam Masuk</th>
+                <th>Jam Pulang</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+
+            <tbody>
+
+              {loadingAbsensi ? (
+                <tr>
+                  <td
+                    colSpan={7}
+                    className="empty-table"
+                  >
+                    Memuat absensi...
+                  </td>
+                </tr>
+              ) : daftarAbsensi.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={7}
+                    className="empty-table"
+                  >
+                    Belum ada absensi.
+                  </td>
+                </tr>
+              ) : (
+                daftarAbsensi.map((a, index) => (
+                  <tr key={a.id || index}>
+
+                    <td>
+                      {a.foto ? (
+                        <img
+                          src={a.foto}
+                          alt="Selfie"
+                          className="selfie"
+                        />
+                      ) : (
+                        <span className="no-photo">
+                          Tanpa Foto
+                        </span>
+                      )}
+                    </td>
+
+                    <td>
+                      {a.id_karyawan || '-'}
+                    </td>
+
+                    <td>
+                      <strong>
+                        {a.nama || '-'}
+                      </strong>
+                    </td>
+
+                    <td>
+                      {a.tanggal || '-'}
+                    </td>
+
+                    <td className="time-in">
+                      {a.jam_masuk || '-'}
+                    </td>
+
+                    <td className="time-out">
+                      {a.jam_pulang ||
+                        'Belum Pulang'}
+                    </td>
+
+                    <td>
+                      <span className="status-badge">
+                        {a.status || 'Hadir'}
+                      </span>
+                    </td>
+
+                  </tr>
+                ))
+              )}
+
+            </tbody>
+          </table>
+
+        </div>
+
+      </section>
+    );
+  };
+
+  /*
+   * =====================================================
+   * HALAMAN RECRUITMENT
+   * =====================================================
+   */
+
+  const RecruitmentPage = () => {
+    return (
+      <section className="data-section">
+
+        <div className="data-header">
+          <div>
+            <h2>Recruitment</h2>
+            <p>
+              Kelola proses penerimaan karyawan baru
+            </p>
+          </div>
+
+          <button
+            className="export-green"
+            onClick={() =>
+              alert('Form tambah kandidat akan dibuat di sini.')
+            }
+          >
+            + Add Candidate
+          </button>
+        </div>
+
+        <div className="stats-grid">
+
+          <div className="dashboard-card">
+            <h3>Total Candidates</h3>
+            <h1>0</h1>
+          </div>
+
+          <div className="dashboard-card">
+            <h3>Interview</h3>
+            <h1>0</h1>
+          </div>
+
+          <div className="dashboard-card">
+            <h3>Hired</h3>
+            <h1>0</h1>
+          </div>
+
+        </div>
+
+        <div className="table-wrapper">
+
+          <table>
+            <thead>
+              <tr>
+                <th>Nama Kandidat</th>
+                <th>Posisi</th>
+                <th>Status</th>
+                <th>Tanggal</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr>
+                <td colSpan={4} className="empty-table">
+                  Belum ada kandidat recruitment.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+        </div>
+
+      </section>
+    );
+  };
+
+  /*
+   * =====================================================
+   * HALAMAN FINANCE
+   * =====================================================
+   */
+
+  const FinancePage = () => {
+    return (
+      <section className="data-section">
+
+        <div className="data-header">
+          <div>
+            <h2>Finance</h2>
+            <p>
+              Kelola pengeluaran dan reimbursement
+            </p>
+          </div>
+
+          <button
+            className="export-green"
+            onClick={() =>
+              alert('Form pengajuan expense.')
+            }
+          >
+            + Add Expense
+          </button>
+        </div>
+
+        <div className="stats-grid">
+
+          <div className="dashboard-card">
+            <h3>Total Expense</h3>
+            <h1>Rp 0</h1>
+          </div>
+
+          <div className="dashboard-card">
+            <h3>Pending</h3>
+            <h1>0</h1>
+          </div>
+
+          <div className="dashboard-card">
+            <h3>Approved</h3>
+            <h1>0</h1>
+          </div>
+
+        </div>
+
+        <div className="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Pengaju</th>
+                <th>Kategori</th>
+                <th>Jumlah</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr>
+                <td
+                  colSpan={4}
+                  className="empty-table"
+                >
+                  Belum ada data finance.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </section>
+    );
+  };
+
+  /*
+   * =====================================================
+   * HALAMAN PAYROLL
+   * =====================================================
+   */
+
+  const PayrollPage = () => {
+    return (
+      <section className="data-section">
+
+        <div className="data-header">
+          <div>
+            <h2>Payroll</h2>
+            <p>
+              Kelola penggajian karyawan
+            </p>
+          </div>
+
+          <button
+            className="export-green"
+            onClick={() =>
+              alert('Generate payroll akan dibuat di sini.')
+            }
+          >
+            + Generate Payroll
+          </button>
+        </div>
+
+        <div className="stats-grid">
+
+          <div className="dashboard-card">
+            <h3>Total Karyawan</h3>
+            <h1>{daftarKaryawan.length}</h1>
+          </div>
+
+          <div className="dashboard-card">
+            <h3>Total Payroll</h3>
+            <h1>Rp 0</h1>
+          </div>
+
+          <div className="dashboard-card">
+            <h3>Status</h3>
+            <h1>Draft</h1>
+          </div>
+
+        </div>
+
+        <div className="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Nama</th>
+                <th>Periode</th>
+                <th>Gaji Pokok</th>
+                <th>Total Gaji</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr>
+                <td
+                  colSpan={5}
+                  className="empty-table"
+                >
+                  Belum ada data payroll.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </section>
+    );
+  };
+
+  /*
+   * =====================================================
+   * HALAMAN PRODUCTIVITY
+   * =====================================================
+   */
+
+  const ProductivityPage = () => {
+    return (
+      <section className="data-section">
+
+        <div className="data-header">
+          <div>
+            <h2>Productivity</h2>
+            <p>
+              Monitoring produktivitas karyawan
+            </p>
+          </div>
+        </div>
+
+        <div className="stats-grid">
+
+          <div className="dashboard-card">
+            <h3>Total Kehadiran</h3>
+            <h1>{daftarAbsensi.length}</h1>
+          </div>
+
+          <div className="dashboard-card">
+            <h3>Performance</h3>
+            <h1>0%</h1>
+          </div>
+
+          <div className="dashboard-card">
+            <h3>Task Completed</h3>
+            <h1>0</h1>
+          </div>
+
+        </div>
+
+      </section>
+    );
+  };
+
+  /*
+   * =====================================================
+   * HALAMAN COMPANY
+   * =====================================================
+   */
+
+  const CompanyPage = () => {
+    return (
+      <section className="data-section">
+
+        <div className="data-header">
+          <div>
+            <h2>Company</h2>
+            <p>
+              Informasi dan struktur perusahaan
+            </p>
+          </div>
+        </div>
+
+        <div className="dashboard-card">
+
+          <h3>Moonjustfine</h3>
+
+          <p>
+            Company ID: 70985
+          </p>
+
+          <p>
+            Kelola informasi perusahaan,
+            departemen, jabatan, dan lokasi kerja
+            melalui halaman ini.
+          </p>
+
+          <button
+            className="export-green"
+            onClick={() =>
+              alert('Pengaturan profil perusahaan.')
+            }
+          >
+            Edit Company Profile
+          </button>
+
+        </div>
+
+      </section>
+    );
+  };
+
+  /*
+   * =====================================================
+   * HALAMAN APPLICATIONS
+   * =====================================================
+   */
+
+  const ApplicationsPage = () => {
+    return (
+      <section className="data-section">
+
+        <div className="data-header">
+          <div>
+            <h2>Applications</h2>
+            <p>
+              Kelola aplikasi dan pengajuan karyawan
+            </p>
+          </div>
+        </div>
+
+        <div className="stats-grid">
+
+          <div className="dashboard-card">
+            <h3>Leave Request</h3>
+            <h1>0</h1>
+
+            <button
+              onClick={() =>
+                setShowLeaveRequest(true)
+              }
+            >
+              Buat Pengajuan
+            </button>
+          </div>
+
+          <div className="dashboard-card">
+            <h3>Overtime Request</h3>
+            <h1>0</h1>
+
+            <button
+              onClick={() =>
+                setShowOvertimeRequest(true)
+              }
+            >
+              Buat Pengajuan
+            </button>
+          </div>
+
+        </div>
+
+      </section>
+    );
+  };
+
+  /*
+   * =====================================================
+   * HALAMAN INTEGRATIONS
+   * =====================================================
+   */
+
+  const IntegrationsPage = () => {
+    return (
+      <section className="data-section">
+
+        <div className="data-header">
+          <div>
+            <h2>Integrations</h2>
+            <p>
+              Integrasi sistem dan layanan eksternal
+            </p>
+          </div>
+        </div>
+
+        <div className="dashboard-card">
+
+          <h3>Supabase Database</h3>
+
+          <p>
+            Status: Connected
+          </p>
+
+          <button
+            onClick={() =>
+              alert('Supabase sudah terhubung.')
+            }
+          >
+            Test Connection
+          </button>
+
+        </div>
+
+      </section>
+    );
+  };
+
+  /*
+   * =====================================================
+   * HALAMAN SETTINGS
+   * =====================================================
+   */
+
+  const SettingsPage = () => {
+    return (
+      <section className="data-section">
+
+        <div className="data-header">
+          <div>
+            <h2>Settings</h2>
+            <p>
+              Pengaturan sistem HRIS
+            </p>
+          </div>
+        </div>
+
+        <div className="dashboard-card">
+
+          <h3>Account Settings</h3>
+
+          <button
+            onClick={() =>
+              alert('Fitur ubah password.')
+            }
+          >
+            Change Password
+          </button>
+
+          <br />
+
+          <button
+            onClick={() =>
+              alert('Pengaturan notifikasi.')
+            }
+          >
+            Notification Settings
+          </button>
+
+          <br />
+
+          <button
+            onClick={handleLogoutAdmin}
+          >
+            Logout Account
+          </button>
+
+        </div>
+
+      </section>
+    );
+  };
+
+  /*
+   * =====================================================
+   * RENDER HALAMAN BERDASARKAN MENU
+   * =====================================================
+   */
+
+  const renderPage = () => {
+    switch (activePage) {
+
+      case 'home':
+        return <HomePage />;
+
+      case 'employee-profile':
+        return <EmployeeProfilePage />;
+
+      case 'employees':
+        return <EmployeesPage />;
+
+      case 'recruitment':
+        return <RecruitmentPage />;
+
+      case 'time':
+        return <TimePage />;
+
+      case 'finance':
+        return <FinancePage />;
+
+      case 'payroll':
+        return <PayrollPage />;
+
+      case 'productivity':
+        return <ProductivityPage />;
+
+      case 'company':
+        return <CompanyPage />;
+
+      case 'applications':
+        return <ApplicationsPage />;
+
+      case 'integrations':
+        return <IntegrationsPage />;
+
+      case 'settings':
+        return <SettingsPage />;
+
+      default:
+        return <HomePage />;
+    }
+  };
+
+  /*
+   * =====================================================
+   * DASHBOARD UTAMA
+   * =====================================================
    */
 
   return (
     <div className="hris-app">
 
-      {/* ======================================================
+      {/* =================================================
           SIDEBAR
-      ====================================================== */}
+      ================================================= */}
 
       <aside className="sidebar">
 
@@ -443,266 +1609,199 @@ export default function DashboardAdmin() {
 
           <button
             className={`menu-item ${
-              activeMenu === 'Home'
+              activePage === 'home'
                 ? 'active'
                 : ''
             }`}
             onClick={() =>
-              handleMenuClick('Home')
+              handleMenuClick('home')
             }
           >
-            <span className="menu-icon">
-              ⌂
-            </span>
-
-            <span>
-              Home
-            </span>
+            <span className="menu-icon">⌂</span>
+            <span>Home</span>
           </button>
 
           <button
             className={`menu-item ${
-              activeMenu === 'Employee profile'
+              activePage === 'employee-profile'
                 ? 'active'
                 : ''
             }`}
             onClick={() =>
-              handleMenuClick(
-                'Employee profile'
-              )
+              handleMenuClick('employee-profile')
             }
           >
-            <span className="menu-icon">
-              ◎
-            </span>
-
-            <span>
-              Employee profile
-            </span>
+            <span className="menu-icon">◎</span>
+            <span>Employee profile</span>
           </button>
 
           <button
             className={`menu-item ${
-              activeMenu === 'Employees'
+              activePage === 'employees'
                 ? 'active'
                 : ''
             }`}
             onClick={() =>
-              handleMenuClick('Employees')
+              handleMenuClick('employees')
             }
           >
-            <span className="menu-icon">
-              ♙
-            </span>
-
-            <span>
-              Employees
-            </span>
-
-            <span className="arrow">
-              ›
-            </span>
-          </button>
-
-          <button
-            className="menu-item"
-            onClick={() =>
-              handleMenuClick('Recruitment')
-            }
-          >
-            <span className="menu-icon">
-              ♧
-            </span>
-
-            <span>
-              Recruitment
-            </span>
-
-            <span className="arrow">
-              ›
-            </span>
+            <span className="menu-icon">♙</span>
+            <span>Employees</span>
+            <span className="arrow">›</span>
           </button>
 
           <button
             className={`menu-item ${
-              activeMenu === 'Time'
+              activePage === 'recruitment'
                 ? 'active'
                 : ''
             }`}
             onClick={() =>
-              handleMenuClick('Time')
+              handleMenuClick('recruitment')
             }
           >
-            <span className="menu-icon">
-              ◷
-            </span>
-
-            <span>
-              Time
-            </span>
-
-            <span className="arrow">
-              ›
-            </span>
+            <span className="menu-icon">♧</span>
+            <span>Recruitment</span>
+            <span className="arrow">›</span>
           </button>
 
           <button
-            className="menu-item"
+            className={`menu-item ${
+              activePage === 'time'
+                ? 'active'
+                : ''
+            }`}
             onClick={() =>
-              handleMenuClick('Finance')
+              handleMenuClick('time')
             }
           >
-            <span className="menu-icon">
-              ▣
-            </span>
-
-            <span>
-              Finance
-            </span>
-
-            <span className="arrow">
-              ›
-            </span>
+            <span className="menu-icon">◷</span>
+            <span>Time</span>
+            <span className="arrow">›</span>
           </button>
 
           <button
-            className="menu-item"
+            className={`menu-item ${
+              activePage === 'finance'
+                ? 'active'
+                : ''
+            }`}
             onClick={() =>
-              handleMenuClick('Payroll')
+              handleMenuClick('finance')
             }
           >
-            <span className="menu-icon">
-              ▤
-            </span>
-
-            <span>
-              Payroll
-            </span>
-
-            <span className="arrow">
-              ›
-            </span>
+            <span className="menu-icon">▣</span>
+            <span>Finance</span>
+            <span className="arrow">›</span>
           </button>
 
           <button
-            className="menu-item"
+            className={`menu-item ${
+              activePage === 'payroll'
+                ? 'active'
+                : ''
+            }`}
             onClick={() =>
-              handleMenuClick('Productivity')
+              handleMenuClick('payroll')
             }
           >
-            <span className="menu-icon">
-              ✓
-            </span>
-
-            <span>
-              Productivity
-            </span>
-
-            <span className="arrow">
-              ›
-            </span>
+            <span className="menu-icon">▤</span>
+            <span>Payroll</span>
+            <span className="arrow">›</span>
           </button>
 
           <button
-            className="menu-item"
+            className={`menu-item ${
+              activePage === 'productivity'
+                ? 'active'
+                : ''
+            }`}
             onClick={() =>
-              handleMenuClick('Company')
+              handleMenuClick('productivity')
             }
           >
-            <span className="menu-icon">
-              ▥
-            </span>
+            <span className="menu-icon">✓</span>
+            <span>Productivity</span>
+            <span className="arrow">›</span>
+          </button>
 
-            <span>
-              Company
-            </span>
-
-            <span className="arrow">
-              ›
-            </span>
+          <button
+            className={`menu-item ${
+              activePage === 'company'
+                ? 'active'
+                : ''
+            }`}
+            onClick={() =>
+              handleMenuClick('company')
+            }
+          >
+            <span className="menu-icon">▥</span>
+            <span>Company</span>
+            <span className="arrow">›</span>
           </button>
 
           <div className="sidebar-separator"></div>
 
           <button
-            className="menu-item"
+            className={`menu-item ${
+              activePage === 'applications'
+                ? 'active'
+                : ''
+            }`}
             onClick={() =>
-              handleMenuClick('Applications')
+              handleMenuClick('applications')
             }
           >
-            <span className="menu-icon">
-              ◇
-            </span>
-
-            <span>
-              Applications
-            </span>
-
-            <span className="arrow">
-              ›
-            </span>
+            <span className="menu-icon">◇</span>
+            <span>Applications</span>
+            <span className="arrow">›</span>
           </button>
 
           <button
-            className="menu-item"
+            className={`menu-item ${
+              activePage === 'integrations'
+                ? 'active'
+                : ''
+            }`}
             onClick={() =>
-              handleMenuClick('Integrations')
+              handleMenuClick('integrations')
             }
           >
-            <span className="menu-icon">
-              ♢
-            </span>
-
-            <span>
-              Integrations
-            </span>
-
-            <span className="arrow">
-              ›
-            </span>
+            <span className="menu-icon">♢</span>
+            <span>Integrations</span>
+            <span className="arrow">›</span>
           </button>
 
           <div className="sidebar-separator"></div>
 
           <button
-            className="menu-item"
+            className={`menu-item ${
+              activePage === 'settings'
+                ? 'active'
+                : ''
+            }`}
             onClick={() =>
-              handleMenuClick('Settings')
+              handleMenuClick('settings')
             }
           >
-            <span className="menu-icon">
-              ⚙
-            </span>
-
-            <span>
-              Settings
-            </span>
+            <span className="menu-icon">⚙</span>
+            <span>Settings</span>
           </button>
 
         </nav>
 
         <div className="company-id">
-
-          <span>
-            ←
-          </span>
-
-          <span>
-            Company ID : 70985
-          </span>
-
+          <span>←</span>
+          <span>Company ID : 70985</span>
         </div>
 
       </aside>
 
-
-      {/* ======================================================
+      {/* =================================================
           MAIN
-      ====================================================== */}
+      ================================================= */}
 
       <main className="main-content">
-
-        {/* TOPBAR */}
 
         <header className="topbar">
 
@@ -724,7 +1823,15 @@ export default function DashboardAdmin() {
 
           <div className="topbar-right">
 
-            <button className="summary-button">
+            <button
+              className="summary-button"
+              onClick={() =>
+                alert(
+                  `Total Karyawan: ${daftarKaryawan.length}\n` +
+                  `Total Absensi: ${daftarAbsensi.length}`
+                )
+              }
+            >
               ✨ Summarize data
             </button>
 
@@ -754,15 +1861,8 @@ export default function DashboardAdmin() {
               </div>
 
               <div className="profile-info">
-
-                <strong>
-                  tirta kusuma
-                </strong>
-
-                <small>
-                  moonjustfine
-                </small>
-
+                <strong>tirta kusuma</strong>
+                <small>moonjustfine</small>
               </div>
 
             </div>
@@ -771,849 +1871,221 @@ export default function DashboardAdmin() {
 
         </header>
 
-
-        {/* ==================================================
-            DASHBOARD CONTENT
-        ================================================== */}
+        {/* =================================================
+            KONTEN HALAMAN BERUBAH DI SINI
+        ================================================= */}
 
         <div className="dashboard-container">
 
-          {/* ==================================================
-              WELCOME CARD
-          ================================================== */}
-
-          <section className="welcome-card">
-
-            <div className="welcome-content">
-
-              <h1>
-                Good morning, tirta kusuma!
-              </h1>
-
-              <p className="date-text">
-                It's Saturday, 12 September
-              </p>
-
-              <div className="shortcut-title">
-                Shortcut
-              </div>
-
-              <div className="shortcut-buttons">
-
-                <button
-                  onClick={() =>
-                    document
-                      .getElementById(
-                        'monitoring-absensi'
-                      )
-                      ?.scrollIntoView({
-                        behavior: 'smooth'
-                      })
-                  }
-                >
-                  Live attendance
-                </button>
-
-                <button>
-                  Request time off
-                </button>
-
-                <button>
-                  Request overtime
-                </button>
-
-                <button>
-                  More request
-                  <span>
-                    ⌄
-                  </span>
-                </button>
-
-              </div>
-
-            </div>
-
-            <div className="welcome-illustration">
-
-              <div className="check-bubble">
-                ✓
-              </div>
-
-              <div className="person-icon">
-                👩🏻‍💼
-              </div>
-
-            </div>
-
-          </section>
-
-
-          {/* ==================================================
-              STATISTICS
-          ================================================== */}
-
-          <section className="stats-grid">
-
-            {/* EMPLOYMENT */}
-
-            <div className="dashboard-card">
-
-              <div className="card-header">
-
-                <span>
-                  Employment Status
-                </span>
-
-                <span className="info-icon">
-                  i
-                </span>
-
-                <span className="three-dot">
-                  ⋮
-                </span>
-
-              </div>
-
-              <div className="progress-wrapper">
-
-                <div className="progress-bar">
-
-                  <div
-                    className="progress-value"
-                    style={{
-                      width:
-                        daftarKaryawan.length > 0
-                          ? '100%'
-                          : '0%'
-                    }}
-                  />
-
-                </div>
-
-                <div className="progress-label">
-
-                  <span>
-                    0%
-                  </span>
-
-                  <span>
-                    100%
-                  </span>
-
-                </div>
-
-              </div>
-
-              <div className="stat-total">
-
-                <span>
-                  Total
-                </span>
-
-                <strong>
-                  {daftarKaryawan.length}
-                </strong>
-
-              </div>
-
-              <div className="stat-row">
-
-                <span>
-
-                  <i className="blue-dot"></i>
-
-                  Permanent
-
-                </span>
-
-                <span>
-                  {daftarKaryawan.length}
-                </span>
-
-                <span>
-                  {daftarKaryawan.length > 0
-                    ? '100.0%'
-                    : '0%'}
-                </span>
-
-              </div>
-
-              <div className="card-footer">
-                Filter
-                <span>
-                  ⌄
-                </span>
-              </div>
-
-            </div>
-
-
-            {/* LENGTH OF SERVICE */}
-
-            <div className="dashboard-card">
-
-              <div className="card-header">
-
-                <span>
-                  Length of Service
-                </span>
-
-                <span className="info-icon">
-                  i
-                </span>
-
-                <span className="three-dot">
-                  ⋮
-                </span>
-
-              </div>
-
-              <div className="service-chart">
-
-                <div className="chart-line line-1"></div>
-
-                <div className="chart-line line-2"></div>
-
-                <div className="chart-line line-3"></div>
-
-                <div className="chart-bar"></div>
-
-                <div className="chart-label">
-                  &gt; 10 yr
-                </div>
-
-              </div>
-
-              <div className="card-footer">
-
-                Filter
-
-                <span>
-                  ⌄
-                </span>
-
-              </div>
-
-            </div>
-
-
-            {/* JOB LEVEL */}
-
-            <div className="dashboard-card">
-
-              <div className="card-header">
-
-                <span>
-                  Job Level
-                </span>
-
-                <span className="info-icon">
-                  i
-                </span>
-
-                <span className="three-dot">
-                  ⋮
-                </span>
-
-              </div>
-
-              <div className="empty-chart">
-                No matching data found
-              </div>
-
-              <div className="card-footer">
-
-                Filter
-
-                <span>
-                  ⌄
-                </span>
-
-              </div>
-
-            </div>
-
-
-            {/* GENDER */}
-
-            <div className="dashboard-card">
-
-              <div className="card-header">
-
-                <span>
-                  Gender Diversity
-                </span>
-
-                <span className="info-icon">
-                  i
-                </span>
-
-                <span className="three-dot">
-                  ⋮
-                </span>
-
-              </div>
-
-              <div className="donut-container">
-
-                <div className="donut">
-
-                  <div className="donut-inner">
-
-                    {daftarKaryawan.length}
-
-                  </div>
-
-                </div>
-
-              </div>
-
-              <div className="gender-label">
-
-                <span>
-
-                  <i className="blue-dot"></i>
-
-                  Not Filled
-
-                </span>
-
-                <span>
-                  {daftarKaryawan.length}
-                </span>
-
-                <span>
-                  {daftarKaryawan.length > 0
-                    ? '100.0%'
-                    : '0%'}
-                </span>
-
-              </div>
-
-              <div className="card-footer">
-
-                Filter
-
-                <span>
-                  ⌄
-                </span>
-
-              </div>
-
-            </div>
-
-          </section>
-
-
-          {/* ==================================================
-              LOWER GRID
-          ================================================== */}
-
-          <section className="lower-grid">
-
-            {/* QUICK LINKS */}
-
-            <div className="dashboard-card quick-links">
-
-              <div className="section-title">
-                Quick Links
-              </div>
-
-              <button
-                onClick={() =>
-                  handleMenuClick(
-                    'Employee profile'
-                  )
-                }
-              >
-                <span className="quick-icon">
-                  ●
-                </span>
-
-                Employee profile
-              </button>
-
-              <button
-                onClick={() =>
-                  handleMenuClick(
-                    'Employees'
-                  )
-                }
-              >
-                <span className="quick-icon">
-                  ♟
-                </span>
-
-                Add Employee
-              </button>
-
-              <button
-                onClick={() =>
-                  handleMenuClick('Time')
-                }
-              >
-                <span className="quick-icon">
-                  ▣
-                </span>
-
-                Attendance
-              </button>
-
-              <button
-                onClick={() =>
-                  handleMenuClick('Payroll')
-                }
-              >
-                <span className="quick-icon">
-                  ▤
-                </span>
-
-                Payroll
-              </button>
-
-            </div>
-
-
-            {/* PROMO */}
-
-            <div className="promo-card">
-
-              <div className="promo-icon">
-                📣
-              </div>
-
-              <div>
-
-                <h2>
-                  Yuk jadi bagian dari
-                  <br />
-                  Moonjustfine
-                </h2>
-
-                <p>
-                  Berikan feedback agar Moonjustfine
-                  <br />
-                  selalu menghadirkan berbagai fitur
-                  <br />
-                  terbaik!
-                </p>
-
-                <button>
-                  Berikan feedback
-                </button>
-
-              </div>
-
-            </div>
-
-
-            {/* WHO'S OFF */}
-
-            <div className="dashboard-card whos-off">
-
-              <div className="section-title">
-
-                Who's Off
-
-                <span className="today">
-                  Today ⌄
-                </span>
-
-              </div>
-
-              <div className="off-empty">
-                No employee off today
-              </div>
-
-            </div>
-
-          </section>
-
-
-          {/* ==================================================
-              DATABASE KARYAWAN
-          ================================================== */}
-
-          <section
-            className="data-section"
-            id="database-karyawan"
-          >
-
-            <div className="data-header">
-
-              <div>
-
-                <h2>
-                  Database Pendaftaran Pegawai
-                </h2>
-
-                <p>
-                  Seluruh data karyawan yang
-                  terdaftar pada sistem
-                </p>
-
-              </div>
-
-              <div className="data-actions">
-
-                <button
-                  className="export-green"
-                  onClick={handleExportExcel}
-                >
-                  ↓ Export Database
-                </button>
-
-                <button
-                  className="export-blue"
-                  onClick={handleExportAbsensiExcel}
-                >
-                  ↓ Export Absensi
-                </button>
-
-                <button
-                  className="logout-button"
-                  onClick={handleLogoutAdmin}
-                >
-                  Logout
-                </button>
-
-              </div>
-
-            </div>
-
-
-            <div className="table-wrapper">
-
-              <table>
-
-                <thead>
-
-                  <tr>
-
-                    <th>
-                      Nama
-                    </th>
-
-                    <th>
-                      Jabatan
-                    </th>
-
-                    <th>
-                      NIK / No. Telp
-                    </th>
-
-                    <th>
-                      Ibu Kandung & Alamat
-                    </th>
-
-                    <th>
-                      Rekening Bank
-                    </th>
-
-                    <th>
-                      Email Gmail
-                    </th>
-
-                    <th>
-                      Aksi
-                    </th>
-
-                  </tr>
-
-                </thead>
-
-                <tbody>
-
-                  {loadingKaryawan ? (
-
-                    <tr>
-
-                      <td
-                        colSpan={7}
-                        className="empty-table"
-                      >
-                        Memuat data karyawan...
-                      </td>
-
-                    </tr>
-
-                  ) : daftarKaryawan.length === 0 ? (
-
-                    <tr>
-
-                      <td
-                        colSpan={7}
-                        className="empty-table"
-                      >
-                        Belum ada data pendaftar.
-                      </td>
-
-                    </tr>
-
-                  ) : (
-
-                    daftarKaryawan.map((k) => (
-
-                      <tr key={k.id}>
-
-                        <td>
-                          <strong>
-                            {k.nama}
-                          </strong>
-                        </td>
-
-                        <td>
-                          {k.jabatan || '-'}
-                        </td>
-
-                        <td>
-                          NIK:
-                          {' '}
-                          {k.nik_ktp || '-'}
-                          <br />
-                          Telp:
-                          {' '}
-                          {k.no_telp || '-'}
-                        </td>
-
-                        <td>
-                          Ibu:
-                          {' '}
-                          {k.nama_ibu_kandung || '-'}
-                          <br />
-                          Alamat:
-                          {' '}
-                          {k.alamat_rumah || '-'}
-                        </td>
-
-                        <td>
-                          {k.nama_rekening || '-'}
-                          <br />
-                          {k.no_rekening || '-'}
-                        </td>
-
-                        <td className="email-cell">
-                          {k.email || '-'}
-                        </td>
-
-                        <td>
-
-                          <button
-                            className="delete-button"
-                            onClick={() =>
-                              handleHapusKaryawan(
-                                k.id,
-                                k.nama
-                              )
-                            }
-                          >
-                            Hapus
-                          </button>
-
-                        </td>
-
-                      </tr>
-
-                    ))
-
-                  )}
-
-                </tbody>
-
-              </table>
-
-            </div>
-
-          </section>
-
-
-          {/* ==================================================
-              MONITORING ABSENSI
-          ================================================== */}
-
-          <section
-            className="data-section"
-            id="monitoring-absensi"
-          >
-
-            <div className="data-header">
-
-              <div>
-
-                <h2>
-                  📸 Live Monitoring Absensi & Selfie
-                </h2>
-
-                <p>
-                  Monitoring kehadiran karyawan
-                  secara realtime
-                </p>
-
-              </div>
-
-              <button
-                className="refresh-button"
-                onClick={fetchAbsensi}
-              >
-                ↻ Refresh
-              </button>
-
-            </div>
-
-
-            <div className="table-wrapper">
-
-              <table>
-
-                <thead>
-
-                  <tr>
-
-                    <th>
-                      Foto
-                    </th>
-
-                    <th>
-                      ID Karyawan
-                    </th>
-
-                    <th>
-                      Nama Pegawai
-                    </th>
-
-                    <th>
-                      Tanggal
-                    </th>
-
-                    <th>
-                      Jam Masuk
-                    </th>
-
-                    <th>
-                      Jam Pulang
-                    </th>
-
-                    <th>
-                      Status
-                    </th>
-
-                  </tr>
-
-                </thead>
-
-                <tbody>
-
-                  {loadingAbsensi ? (
-
-                    <tr>
-
-                      <td
-                        colSpan={7}
-                        className="empty-table"
-                      >
-                        Memuat data absensi...
-                      </td>
-
-                    </tr>
-
-                  ) : daftarAbsensi.length === 0 ? (
-
-                    <tr>
-
-                      <td
-                        colSpan={7}
-                        className="empty-table"
-                      >
-                        Belum ada data absensi hari ini.
-                      </td>
-
-                    </tr>
-
-                  ) : (
-
-                    daftarAbsensi.map(
-                      (absen, idx) => (
-
-                        <tr
-                          key={
-                            absen.id || idx
-                          }
-                        >
-
-                          <td>
-
-                            {absen.foto ? (
-
-                              <img
-                                src={absen.foto}
-                                alt="Selfie karyawan"
-                                className="selfie"
-                              />
-
-                            ) : (
-
-                              <span className="no-photo">
-                                Tanpa Foto
-                              </span>
-
-                            )}
-
-                          </td>
-
-                          <td>
-                            {absen.id_karyawan || '-'}
-                          </td>
-
-                          <td>
-
-                            <strong>
-                              {absen.nama || '-'}
-                            </strong>
-
-                          </td>
-
-                          <td>
-                            {absen.tanggal || '-'}
-                          </td>
-
-                          <td className="time-in">
-                            {absen.jam_masuk || '-'}
-                          </td>
-
-                          <td className="time-out">
-                            {absen.jam_pulang ||
-                              'Belum Pulang'}
-                          </td>
-
-                          <td>
-
-                            <span className="status-badge">
-
-                              {absen.status ||
-                                'Hadir'}
-
-                            </span>
-
-                          </td>
-
-                        </tr>
-
-                      )
-                    )
-
-                  )}
-
-                </tbody>
-
-              </table>
-
-            </div>
-
-          </section>
+          {renderPage()}
 
         </div>
 
       </main>
+
+      {/* =================================================
+          MODAL TAMBAH KARYAWAN
+      ================================================= */}
+
+      {showAddEmployee && (
+        <div className="modal-overlay">
+
+          <div className="modal-card">
+
+            <h2>Tambah Karyawan</h2>
+
+            <form onSubmit={handleAddEmployee}>
+
+              <label>Nama Lengkap</label>
+
+              <input
+                type="text"
+                value={newEmployee.nama}
+                onChange={(e) =>
+                  setNewEmployee({
+                    ...newEmployee,
+                    nama: e.target.value,
+                  })
+                }
+                placeholder="Nama karyawan"
+              />
+
+              <label>Jabatan</label>
+
+              <input
+                type="text"
+                value={newEmployee.jabatan}
+                onChange={(e) =>
+                  setNewEmployee({
+                    ...newEmployee,
+                    jabatan: e.target.value,
+                  })
+                }
+                placeholder="Contoh: Staff"
+              />
+
+              <label>Email</label>
+
+              <input
+                type="email"
+                value={newEmployee.email}
+                onChange={(e) =>
+                  setNewEmployee({
+                    ...newEmployee,
+                    email: e.target.value,
+                  })
+                }
+                placeholder="Email Gmail"
+              />
+
+              <label>No. Telepon</label>
+
+              <input
+                type="text"
+                value={newEmployee.no_telp}
+                onChange={(e) =>
+                  setNewEmployee({
+                    ...newEmployee,
+                    no_telp: e.target.value,
+                  })
+                }
+                placeholder="08xxxxxxxx"
+              />
+
+              <div className="modal-actions">
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setShowAddEmployee(false)
+                  }
+                >
+                  Batal
+                </button>
+
+                <button type="submit">
+                  Simpan
+                </button>
+
+              </div>
+
+            </form>
+
+          </div>
+
+        </div>
+      )}
+
+      {/* =================================================
+          MODAL CUTI
+      ================================================= */}
+
+      {showLeaveRequest && (
+        <div className="modal-overlay">
+
+          <div className="modal-card">
+
+            <h2>Request Time Off</h2>
+
+            <p>
+              Form pengajuan cuti karyawan.
+            </p>
+
+            <input
+              type="text"
+              placeholder="Jenis cuti"
+            />
+
+            <input
+              type="date"
+            />
+
+            <textarea
+              placeholder="Alasan cuti"
+            />
+
+            <div className="modal-actions">
+
+              <button
+                onClick={() =>
+                  setShowLeaveRequest(false)
+                }
+              >
+                Batal
+              </button>
+
+              <button
+                onClick={() => {
+                  alert('Pengajuan cuti berhasil dibuat.');
+                  setShowLeaveRequest(false);
+                }}
+              >
+                Ajukan
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+      )}
+
+      {/* =================================================
+          MODAL LEMBUR
+      ================================================= */}
+
+      {showOvertimeRequest && (
+        <div className="modal-overlay">
+
+          <div className="modal-card">
+
+            <h2>Request Overtime</h2>
+
+            <p>
+              Form pengajuan lembur karyawan.
+            </p>
+
+            <input
+              type="date"
+            />
+
+            <input
+              type="time"
+            />
+
+            <input
+              type="time"
+            />
+
+            <textarea
+              placeholder="Alasan lembur"
+            />
+
+            <div className="modal-actions">
+
+              <button
+                onClick={() =>
+                  setShowOvertimeRequest(false)
+                }
+              >
+                Batal
+              </button>
+
+              <button
+                onClick={() => {
+                  alert('Pengajuan lembur berhasil dibuat.');
+                  setShowOvertimeRequest(false);
+                }}
+              >
+                Ajukan
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+      )}
 
     </div>
   );
