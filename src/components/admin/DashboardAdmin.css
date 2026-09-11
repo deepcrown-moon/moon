@@ -1549,3 +1549,43 @@
   background: rgba(255, 255, 255, 0.8);
   border: 1px solid rgba(255, 255, 255, 0.6);
 }
+/* Membuat latar belakang area utama transparan */
+.main-content {
+  background: transparent !important;
+}
+
+/* Sidebar dengan efek kaca semi-transparan */
+.sidebar {
+  background: rgba(255, 255, 255, 0.75) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-right: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+/* Topbar dengan efek kaca semi-transparan */
+.topbar {
+  background: rgba(255, 255, 255, 0.75) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+/* Semua kartu dashboard (Welcome, Statistik, Tabel, dll) menjadi transparan berbalut efek blur */
+.welcome-card,
+.dashboard-card,
+.data-section {
+  background: rgba(255, 255, 255, 0.45) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.6) !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+}
+
+/* Warna latar tabel dan elemen pendukung agar tetap terbaca jelas */
+.table-wrapper th {
+  background: rgba(255, 255, 255, 0.6) !important;
+}
+
+.table-wrapper td {
+  background: rgba(255, 255, 255, 0.2);
+}
