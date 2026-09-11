@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { supabase } from '../../supabaseClient'; // Sesuaikan path jika berbeda
+import { useState, useEffect } from 'react';
+import { supabase } from '../../supabaseClient';
 import { 
   Users, 
-  Calendar, 
   Clock, 
   DollarSign, 
   FileText, 
@@ -30,7 +29,6 @@ export default function DashboardAdmin() {
     try {
       setLoading(true);
       
-      // Ambil jumlah total karyawan
       const { count: countKaryawan, error: errKaryawan } = await supabase
         .from('karyawan')
         .select('*', { count: 'exact', head: true });
@@ -38,7 +36,6 @@ export default function DashboardAdmin() {
       if (errKaryawan) throw errKaryawan;
       setTotalKaryawan(countKaryawan || 0);
 
-      // Ambil jumlah absensi hari ini
       const today = new Date().toISOString().split('T')[0];
       const { count: countAbsensi, error: errAbsensi } = await supabase
         .from('absensi')
@@ -57,8 +54,6 @@ export default function DashboardAdmin() {
 
   return (
     <div className="flex h-screen bg-slate-50 font-sans overflow-hidden">
-      
-      {/* 1. SIDEBAR NAVIGATION (Menu Samping) */}
       <aside className="w-64 bg-slate-900 text-slate-300 flex flex-col border-r border-slate-800 hidden md:flex">
         <div className="p-5 flex items-center space-x-3 border-b border-slate-800">
           <div className="bg-indigo-600 text-white p-2 rounded-lg font-bold text-lg">M</div>
@@ -108,10 +103,7 @@ export default function DashboardAdmin() {
         </div>
       </aside>
 
-      {/* 2. MAIN CONTENT AREA */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        
-        {/* Top Header Bar */}
         <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 z-10">
           <div className="flex items-center space-x-4">
             <span className="text-xs bg-indigo-50 text-indigo-600 px-2.5 py-1 rounded-md font-semibold border border-indigo-100">
@@ -145,10 +137,7 @@ export default function DashboardAdmin() {
           </div>
         </header>
 
-        {/* Scrollable Dashboard Body */}
         <main className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50">
-          
-          {/* Welcome Banner */}
           <div className="bg-gradient-to-r from-indigo-600 to-indigo-800 rounded-2xl p-6 text-white shadow-lg flex flex-col md:flex-row justify-between items-center">
             <div className="space-y-2 mb-4 md:mb-0">
               <h2 className="text-2xl font-bold tracking-tight">Selamat Datang Kembali, Admin!</h2>
@@ -162,7 +151,6 @@ export default function DashboardAdmin() {
             </div>
           </div>
 
-          {/* Quick Metrics Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
               <div>
@@ -197,62 +185,8 @@ export default function DashboardAdmin() {
               </div>
             </div>
           </div>
-
-          {/* Shortcut Bar & Announcements Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
-            {/* Left 2 Columns: Quick Actions & System Feeds */}
-            <div className="lg:col-span-2 space-y-6">
-              <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                <h3 className="text-sm font-bold text-slate-800 mb-4">Pintasan Menu Utama</h3>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {['Live Attendance', 'Data Karyawan', 'Slip Gaji', 'Pengumuman'].map((menu, idx) => (
-                    <button key={idx} className="p-3 text-left bg-slate-50 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg border border-slate-100 transition-all text-xs font-semibold text-slate-700">
-                      {menu}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                <h3 className="text-sm font-bold text-slate-800 mb-3">Pengumuman Perusahaan</h3>
-                <div className="p-4 bg-slate-50 rounded-lg border border-slate-100 text-sm text-slate-600 space-y-2">
-                  <p className="font-semibold text-slate-800">📢 Pembaruan Sistem Absensi & Gaji</p>
-                  <p className="text-xs text-slate-500">
-                    Database baru telah aktif menggunakan migrasi Cloud Supabase. Seluruh data absensi karyawan kini tercatat secara real-time dan terintegrasi penuh dengan PWA Android.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Right Column: Activity / Info Widget */}
-            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
-              <h3 className="text-sm font-bold text-slate-800">Informasi Sistem</h3>
-              <div className="space-y-3 text-xs text-slate-600">
-                <div className="flex justify-between py-2 border-b border-slate-100">
-                  <span className="text-slate-400">Hosting</span>
-                  <span className="font-semibold text-slate-700">Netlify Production</span>
-                </div>
-                <div className="flex justify-between py-2 border-b border-slate-100">
-                  <span className="text-slate-400">Database</span>
-                  <span className="font-semibold text-slate-700">Supabase Free Tier</span>
-                </div>
-                <div className="flex justify-between py-2 border-b border-slate-100">
-                  <span className="text-slate-400">PWA Manifest</span>
-                  <span className="font-semibold text-emerald-600">Active</span>
-                </div>
-                <div className="flex justify-between py-2">
-                  <span className="text-slate-400">Versi UI</span>
-                  <span className="font-semibold text-slate-700">v2.4 Enterprise</span>
-                </div>
-              </div>
-            </div>
-
-          </div>
-
         </main>
       </div>
-
     </div>
   );
 }
