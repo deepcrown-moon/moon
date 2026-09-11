@@ -1614,3 +1614,22 @@
 .admin-login-form button:hover {
   background: #b91c1c;
 }
+/* Gradasi warna latar belakang utama */
+.main-content {
+  background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 50%, #e0e7ff 100%);
+  min-height: 100vh;
+}
+
+.dashboard-container {
+  background: transparent;
+}
+
+/* Efek kaca (glassmorphism) tipis pada kartu agar kontras dengan background baru */
+.dashboard-card, 
+.data-section, 
+.welcome-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(203, 213, 225, 0.6);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+}
