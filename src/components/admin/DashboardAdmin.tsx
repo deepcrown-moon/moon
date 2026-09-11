@@ -1,7 +1,7 @@
 import './DashboardAdmin.css';
 import { useEffect, useState, type FormEvent } from 'react';
 import { supabase } from '../../supabaseClient';
-
+import RecruitmentPage from './RecruitmentPage';
 interface Karyawan {
   id: string;
   nama: string;
