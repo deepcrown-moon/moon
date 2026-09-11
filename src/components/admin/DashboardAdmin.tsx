@@ -122,7 +122,7 @@ export default function DashboardAdmin() {
     <aside className="sidebar">
 
       <div className="logo-area">
-        <div className="logo-text">TALENTA</div>
+        <div className="logo-text">Moonjustfine</div>
         <div className="logo-divider"></div>
         <span className="hris-text">HRIS</span>
       </div>
