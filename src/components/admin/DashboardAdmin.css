@@ -1589,3 +1589,49 @@
 .table-wrapper td {
   background: rgba(255, 255, 255, 0.2);
 }
+/* Paksa latar belakang aplikasi dan kontainer utama transparan total */
+.hris-app,
+.main-content,
+.dashboard-container {
+  background: transparent !important;
+}
+
+/* Sidebar dan Topbar transparan kaca */
+.sidebar,
+.topbar {
+  background: rgba(255, 255, 255, 0.18) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-color: rgba(255, 255, 255, 0.25) !important;
+}
+
+/* Semua kartu, section, dan kotak putih diubah menjadi transparan */
+.dashboard-card,
+.data-section,
+.welcome-card,
+.promo-card {
+  background: rgba(255, 255, 255, 0.22) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.35) !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+}
+
+/* Tabel, header tabel, dan baris data dibuat transparan */
+.table-wrapper th,
+.table-wrapper td {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  color: #1f2937 !important;
+}
+
+.table-wrapper tr:hover td {
+  background: rgba(255, 255, 255, 0.3) !important;
+}
+
+/* Kolom pencarian dan input transparan */
+input, select, textarea {
+  background: rgba(255, 255, 255, 0.3) !important;
+  border-color: rgba(255, 255, 255, 0.4) !important;
+  color: #1f2937 !important;
+}
